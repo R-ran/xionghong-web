@@ -1,0 +1,124 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { cn } from "@/lib/utils"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { ChevronDown } from "lucide-react"
+
+const categories = [
+  {
+    id: "home",
+    label: "Home",
+    href: "/",
+  },
+  {
+    id: "products",
+    label: "Products",
+    href: "/products",
+    dropdown: [
+      { label: "XH self-drilling anchor bolt", href: "/products/self-drilling-bolt" },
+      { label: "XH hollow grouted anchor bolt", href: "/products/hollow-grouted-bolt" },
+      { label: "Expansion-shell hollow anchor bolt", href: "/products/expansion-shell-bolt" },
+      { label: "Fiberglass anchor bolt", href: "/products/fiberglass-bolt" },
+      { label:"Accessories",href:"/products/accessories"},
+    ],
+  },
+  {
+    id: "successful-projects",
+    label: "Successful Projects",
+    href: "/successful-projects",
+    dropdown: [
+      { label: "China Projects", href: "/successful-projects/china" },
+      { label: "Overseas Projects", href: "/successful-projects/overseas" },
+    ],
+  },
+  {
+    id: "about",
+    label: "About Us",
+    href: "/about",
+    dropdown: [
+      { label: "Why choose us", href: "/about/why-choose-us" },
+      { label: "Factory Overview", href: "/about/factory" },
+      { label: "History", href: "/about/history" },
+      { label: "Certificate", href: "/about/certificate" },
+    ],
+  },
+  {
+    id: "news-blog",
+    label: "News & Blog",
+    href: "/news-blog",
+    dropdown: [
+      { label: "Xinghong News", href: "/news-blog/news" },
+      { label: "Blog", href: "/news-blog/blog" },
+    ],
+  },
+  {
+    id: "contact",
+    label: "Contact US",
+    href: "/contact",
+  },
+]
+
+export function StickyNav() {
+  const [isSticky, setIsSticky] = useState(false)
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsSticky(window.scrollY > 150)
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  return (
+    <nav
+      className={cn(
+        "sticky top-0 z-40 transition-all duration-300",
+        isSticky ? "bg-primary shadow-lg" : "bg-primary/95",
+      )}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-evenly h-16">
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              className="relative"
+              onMouseEnter={() => category.dropdown && setActiveDropdown(category.id)}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
+              <Link href={category.href}>
+                <button
+                  className={cn(
+                    "px-8 py-4 text-base font-medium transition-colors flex items-center gap-2",
+                    pathname === category.href || pathname.startsWith(category.href + "/")
+                      ? "bg-primary text-primary-foreground"
+                      : "text-secondary-foreground hover:bg-primary/20",
+                  )}
+                >
+                  {category.label}
+                  {category.dropdown && <ChevronDown className="w-4 h-4" />}
+                </button>
+              </Link>
+
+              {category.dropdown && activeDropdown === category.id && (
+                <div className="absolute top-full left-0 min-w-[280px] bg-primary shadow-lg py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {category.dropdown.map((item, index) => (
+                    <Link key={index} href={item.href}>
+                      <div className="px-6 py-3 text-primary-foreground hover:bg-primary-foreground/10 transition-colors text-sm">
+                        {item.label}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </nav>
+  )
+}
