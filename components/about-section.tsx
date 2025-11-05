@@ -43,7 +43,7 @@ const aboutItems = [
 
 export function AboutSection() {
   return (
-    <section id="about" className="py-10 bg-muted/30">
+    <section id="about" className="py-2 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="mb-6">
           <Link href="/about" className="inline-block group">

@@ -65,7 +65,7 @@ export function TestimonialsSection() {
           </Link>
         </div>
 
-        <div className="mb-16">
+        <div className="mb-8">
           <h3 className="text-2xl font-bold mb-6">
             <span className="text-foreground">China </span>
             <span className="text-primary">Projects</span>
