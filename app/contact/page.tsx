@@ -55,7 +55,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Phone</h3>
-                    <p className="text-muted-foreground">+86 123 4567 8900</p>
+                    <p className="text-muted-foreground">+86 180 2142 5296</p>
                   </div>
                 </div>
 
@@ -66,9 +66,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">Address</h3>
                     <p className="text-muted-foreground">
-                      123 Industrial Park, Geotechnical District
-                      <br />
-                      Shanghai, China 200000
+                    Ronghu Village, Yuqi Supporting Area, Huishan Economic Development Zone, Wuxi City, Jiangsu Province, China
                     </p>
                   </div>
                 </div>

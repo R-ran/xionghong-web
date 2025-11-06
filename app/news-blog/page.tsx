@@ -72,29 +72,66 @@ export default function NewsBlogPage() {
   }, [])
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <TopHeader />
       <StickyNav />
 
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="mb-8">
-            <Link href="/">
-              <Button variant="ghost" className="mb-4">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
-              </Button>
-            </Link>
-            <h1 className="text-5xl font-bold mb-4">
-              <span className="text-foreground">NEWS & </span>
-              <span className="text-primary">BLOG</span>
-            </h1>
-            <div className="w-20 h-1 bg-primary" />
-            <p className="text-lg text-muted-foreground mt-4 max-w-2xl">
-              Stay updated with the latest news, product launches, industry insights, and success stories from SINOROCK.
-            </p>
+      <main className="pt-12">
+        {/* Breadcrumbs */}
+        <div className="container mx-auto px-4 mb-4">
+          <div className="text-muted-foreground text-sm">
+            Your Position : <Link href="/" className="hover:text-primary">Home</Link> &gt; News & Blog
           </div>
+        </div>
 
+        {/* Main Content Area */}
+        <div className="container mx-auto px-4 mb-16">
+          <h1 className="text-5xl font-bold mb-4">
+            <span className="text-foreground">NEWS & </span>
+            <span className="text-primary">BLOG</span>
+          </h1>
+          <div className="w-20 h-1 bg-primary" />
+          <p className="text-lg text-muted-foreground mt-4 whitespace-nowrap">
+            Stay updated with the latest news, product launches, industry insights, and success stories from SINOROCK.
+          </p>
+        </div>
+
+        {/* News and Blogs Navigation */}
+        <div className="container mx-auto px-4 mb-8">
+          <div className="bg-gray-800 rounded-lg overflow-hidden">
+  <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-700">
+    
+      <Link href="/news-blog/news">
+        <div className="p-6 hover:bg-gray-700 transition-colors cursor-pointer flex items-center justify-center h-full gap-4">
+          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+              {/* 你可以在这里放图标或图片 */}
+              
+              </div>
+            <div className="text-center">
+              <h3 className="text-white text-3xl font-bold mb-1">News</h3>
+              <p className="text-white/80 text-sm">Compay updates and news</p>
+            </div>
+        </div>
+      </Link>
+
+<Link href="/news-blog/blogs">
+        <div className="p-6 hover:bg-gray-700 transition-colors cursor-pointer flex items-center justify-center h-full gap-4">
+        <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+              {/* 你可以在这里放图标或图片 */}
+
+              </div>
+            <div className="text-center">
+              <h3 className="text-white text-3xl font-bold mb-1">Blogs</h3>
+              <p className="text-white/80 text-sm">Industry insights & technical guides</p>
+            </div>
+        </div>
+      </Link>
+  </div>
+          </div>
+        </div>
+
+        {/* News Cards */}
+        <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {allNews.map((item) => (
               <Card key={item.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
@@ -131,9 +168,9 @@ export default function NewsBlogPage() {
             ))}
           </div>
         </div>
-      </section>
+      </main>
 
       <Footer />
-    </main>
+    </div>
   )
 }

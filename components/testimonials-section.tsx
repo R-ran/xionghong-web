@@ -1,10 +1,5 @@
-"use client"
-
-import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card"
 
 const chinaProjects = [
   {
@@ -15,6 +10,8 @@ const chinaProjects = [
       "Successfully provided rock bolt solutions for the construction of Beijing Subway Line 16, ensuring structural stability in complex geological conditions.",
     image: "/beijing.jpg",
     year: "2023",
+    slug: "beijing-subway-line-16",
+    category: "China Projects",
   },
   {
     id: 2,
@@ -24,6 +21,8 @@ const chinaProjects = [
       "Delivered high-performance anchor systems for the underground powerhouse excavation of a major hydropower project in mountainous terrain.",
     image: "/sichuan.jpg",
     year: "2022",
+    slug: "sichuan-hydropower-foundation",
+    category: "China Projects",
   },
 ]
 
@@ -36,6 +35,8 @@ const overseasProjects = [
       "Provided T Thread self-drilling anchor bolts for a major alpine tunnel project, meeting stringent European safety standards.",
     image: "/overseas1.jpg",
     year: "2023",
+    slug: "high-rise-foundation",
+    category: "Overseas Projects",
   },
   {
     id: 4,
@@ -45,18 +46,19 @@ const overseasProjects = [
       "Supplied corrosion-resistant rock bolts for underground mining operations in harsh environmental conditions.",
     image: "/overseas2.jpg",
     year: "2022",
+    slug: "mountain-highway-slope",
+    category: "Overseas Projects",
   },
 ]
 
 export function TestimonialsSection() {
-  const [chinaIndex, setChinaIndex] = useState(0)
-  const [overseasIndex, setOverseasIndex] = useState(0)
+  const allProjects = [...chinaProjects, ...overseasProjects];
 
   return (
-    <section id="testimonials" className="py-10 bg-background">
+    <section id="testimonials" className="py-2 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="mb-6">
-          <Link href="/testimonials" className="inline-block group">
+          <Link href="/successful-projects" className="inline-block group">
             <h2 className="text-4xl font-bold mb-2 group-hover:opacity-80 transition-opacity">
               <span className="text-foreground">SUCCESSFUL </span>
               <span className="text-primary">PROJECTS</span>
@@ -65,122 +67,36 @@ export function TestimonialsSection() {
           </Link>
         </div>
 
-        <div className="mb-8">
-          <h3 className="text-2xl font-bold mb-6">
-            <span className="text-foreground">China </span>
-            <span className="text-primary">Projects</span>
-          </h3>
-          <div className="relative">
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="grid md:grid-cols-2 gap-0">
-                  <div className="relative h-96 md:h-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {allProjects.map((project) => (
+            <Link 
+              key={project.id} 
+              href="/successful-projects"
+            >
+              <Card className="group cursor-pointer overflow-hidden hover:shadow-xl transition-all h-full">
+                <CardContent className="p-0">
+                  <div className="relative h-64 overflow-hidden">
                     <img
-                      src={chinaProjects[chinaIndex].image || "/placeholder.svg"}
-                      alt={chinaProjects[chinaIndex].name}
-                      className="w-full h-full object-cover"
+                      src={project.image || "/placeholder.svg"}
+                      alt={project.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <div className="text-primary font-semibold mb-2 text-sm">
+                        {project.year}
+                      </div>
+                      <h3 className="text-2xl font-bold text-white">{project.name}</h3>
+                    </div>
                   </div>
-                  <div className="p-8 md:p-12 flex flex-col justify-center">
-                    <div className="text-primary font-semibold mb-2">{chinaProjects[chinaIndex].year}</div>
-                    <h4 className="text-2xl font-bold mb-2">{chinaProjects[chinaIndex].name}</h4>
-                    <p className="text-muted-foreground mb-4">{chinaProjects[chinaIndex].location}</p>
-                    <p className="text-lg text-pretty">{chinaProjects[chinaIndex].description}</p>
+                  <div className="p-6">
+                    <p className="text-muted-foreground mb-2 text-sm">{project.location}</p>
+                    <p className="text-muted-foreground">{project.description}</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-center gap-4 mt-6">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setChinaIndex((prev) => (prev - 1 + chinaProjects.length) % chinaProjects.length)}
-                className="rounded-full bg-transparent"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center gap-2">
-                {chinaProjects.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setChinaIndex(index)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      index === chinaIndex ? "bg-primary w-8" : "bg-muted"
-                    }`}
-                  />
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setChinaIndex((prev) => (prev + 1) % chinaProjects.length)}
-                className="rounded-full bg-transparent"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-2xl font-bold mb-6">
-            <span className="text-foreground">Overseas </span>
-            <span className="text-primary">Projects</span>
-          </h3>
-          <div className="relative">
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="grid md:grid-cols-2 gap-0">
-                  <div className="relative h-96 md:h-auto">
-                    <img
-                      src={overseasProjects[overseasIndex].image || "/placeholder.svg"}
-                      alt={overseasProjects[overseasIndex].name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-8 md:p-12 flex flex-col justify-center">
-                    <div className="text-primary font-semibold mb-2">{overseasProjects[overseasIndex].year}</div>
-                    <h4 className="text-2xl font-bold mb-2">{overseasProjects[overseasIndex].name}</h4>
-                    <p className="text-muted-foreground mb-4">{overseasProjects[overseasIndex].location}</p>
-                    <p className="text-lg text-pretty">{overseasProjects[overseasIndex].description}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-center gap-4 mt-6">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() =>
-                  setOverseasIndex((prev) => (prev - 1 + overseasProjects.length) % overseasProjects.length)
-                }
-                className="rounded-full bg-transparent"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center gap-2">
-                {overseasProjects.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setOverseasIndex(index)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      index === overseasIndex ? "bg-primary w-8" : "bg-muted"
-                    }`}
-                  />
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setOverseasIndex((prev) => (prev + 1) % overseasProjects.length)}
-                className="rounded-full bg-transparent"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
       </div>
     </section>

@@ -57,7 +57,7 @@ export function AboutSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {aboutItems.map((item) => (
-            <Link key={item.id} href={item.href}>
+            <Link key={item.id} href="/about">
               <Card className="group cursor-pointer overflow-hidden hover:shadow-xl transition-all h-full">
                 <CardContent className="p-0">
                   <div className="relative h-64 overflow-hidden">
