@@ -1,7 +1,9 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { Calendar, PenLine, ArrowLeft } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -13,6 +15,8 @@ import { Button } from "@/components/ui/button"
 import { getArticlesByType } from "@/lib/news-blogs-data"
 
 const blogArticles = getArticlesByType("blog")
+
+
 
 export default function BlogsPage() {
   useEffect(() => {
