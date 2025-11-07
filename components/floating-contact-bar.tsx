@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Mail, MessageCircle } from "lucide-react"
+import Image from "next/image"
+import { Mail } from "lucide-react"
 
 // 微信图标 SVG
 const WechatIcon = ({ className }: { className?: string }) => (
@@ -76,7 +77,7 @@ export function FloatingContactBar() {
             }`}
             aria-label="WhatsApp"
           >
-            <MessageCircle className="w-6 h-6" />
+            <Image src="/WhatsApp.png" alt="WhatsApp" width={24} height={24} className="w-6 h-6" />
           </button>
           {hoveredItem === "whatsapp" && (
             <div className="absolute right-full top-0 mr-2 bg-[#1e3a5f] text-white px-4 py-3 rounded-lg whitespace-nowrap shadow-xl z-[10000]">
@@ -100,7 +101,7 @@ export function FloatingContactBar() {
             }`}
             aria-label="WeChat"
           >
-            <WechatIcon className="w-6 h-6" />
+            <Image src="/WeChat.png" alt="WeChat" width={24} height={24} className="w-6 h-6" />
           </button>
           {hoveredItem === "wechat" && (
             <div className="absolute right-full top-0 mr-2 bg-white p-4 rounded-lg shadow-xl z-[10000]">
@@ -112,7 +113,7 @@ export function FloatingContactBar() {
                   onError={(e) => {
                     // 如果图片加载失败，显示占位符
                     const target = e.target as HTMLImageElement
-                    target.src = "/placeholder.svg?height=144&width=144&text=WeChat+QR"
+                    target.src = "/xinhong logo.png?height=144&width=144&text=WeChat+QR"
                   }}
                 />
               </div>

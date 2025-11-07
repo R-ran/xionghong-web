@@ -18,13 +18,13 @@ const products = [
   {
     id: 3,
     name: "Expansion-shell hollow anchor bolt",
-    image: "product3.jpg",
+    image: "/product3.jpg",
     slug: "expansion-shell-bolt",
   },
   {
     id: 4,
     name: "Fiberglass anchor bolt",
-    image: "product4.jpg",
+    image: "/product4.jpg",
     slug: "fiberglass-anchor-bolt",
   },
 ]
@@ -48,32 +48,33 @@ export function ProductsSection() {
               const isImageTop = index % 2 === 0
 
               return (
-                <Link key={product.id} href={`/products/${product.slug}`} className="block">
-                  <Card className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all bg-muted/20 h-full rounded-none border-r last:border-r-0">
+                <Link key={product.id} href={`/products/${product.slug}`} className="block h-full">
+                  <Card className="group h-full cursor-pointer overflow-hidden hover:shadow-lg transition-all bg-muted/20 rounded-none border-r last:border-r-0 py-0 gap-0 min-h-[540px]">
                     <CardContent className="p-0 h-full">
-                      <div className="flex flex-col h-full">
+                      <div className="grid h-full grid-rows-[1fr_auto_1fr]">
                         {isImageTop ? (
                           <>
                             {/* Image on top */}
-                            
-                              <div className="relative w-full flex-1 overflow-hidden bg-write">
-                                <img
-                                  src={product.image || "/placeholder.svg"}
-                                  alt={product.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
+                            <div className="relative h-full w-full overflow-hidden bg-white">
+                              <img
+                                src={product.image || "/placeholder.svg"}
+                                alt={product.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
                             </div>
                             {/* Orange diamond icon */}
-                            <div className="flex justify-center -my-5 relative z-10">
+                            <div className="flex items-center justify-center py-6">
                               <div className="w-10 h-10 bg-primary rotate-45 flex items-center justify-center shadow-lg">
                                 <ChevronDown className="w-4 h-4 text-white -rotate-45" />
                               </div>
                             </div>
                             {/* Text on bottom */}
-                            <div className="p-6 flex-1 flex flex-col justify-center bg-muted/30">
-                              <h3 className="text-lg font-medium mb-3 text-center leading-tight">{product.name}</h3>
-                              <div className="w-16 h-0.5 bg-foreground mx-auto mb-4" />
-                              <p className="text-center text-sm font-medium tracking-wide text-foreground/70 group-hover:text-primary transition-colors">
+                            <div className="flex h-full flex-col justify-center bg-muted/30 p-8 text-center space-y-6">
+                              <h3 className="text-xl font-semibold leading-tight">
+                                {product.name}
+                              </h3>
+                              <div className="w-16 h-0.5 bg-foreground mx-auto" />
+                              <p className="text-sm font-medium tracking-wide text-foreground/70 group-hover:text-primary transition-colors">
                                 LEARN MORE
                               </p>
                             </div>
@@ -81,27 +82,28 @@ export function ProductsSection() {
                         ) : (
                           <>
                             {/* Text on top */}
-                            <div className="p-6 flex-1 flex flex-col justify-center bg-muted/30">
-                              <h3 className="text-lg font-medium mb-3 text-center leading-tight">{product.name}</h3>
-                              <div className="w-16 h-0.5 bg-foreground mx-auto mb-4" />
-                              <p className="text-center text-sm font-medium tracking-wide text-foreground/70 group-hover:text-primary transition-colors">
+                            <div className="flex h-full flex-col justify-center bg-muted/30 p-8 text-center space-y-6">
+                              <h3 className="text-xl font-semibold leading-tight">
+                                {product.name}
+                              </h3>
+                              <div className="w-16 h-0.5 bg-foreground mx-auto" />
+                              <p className="text-sm font-medium tracking-wide text-foreground/70 group-hover:text-primary transition-colors">
                                 LEARN MORE
                               </p>
                             </div>
                             {/* Orange diamond icon */}
-                            <div className="flex justify-center -my-5 relative z-10">
+                            <div className="flex items-center justify-center py-6">
                               <div className="w-10 h-10 bg-primary rotate-45 flex items-center justify-center shadow-lg">
                                 <ChevronDown className="w-4 h-4 text-white -rotate-45" />
                               </div>
                             </div>
                             {/* Image on bottom */}
-                           
-                              <div className="relative w-full flex-1 overflow-hidden bg-write">
-                                <img
-                                  src={product.image || "/placeholder.svg"}
-                                  alt={product.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
+                            <div className="relative h-full w-full overflow-hidden bg-white">
+                              <img
+                                src={product.image || "/placeholder.svg"}
+                                alt={product.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
                             </div>
                           </>
                         )}

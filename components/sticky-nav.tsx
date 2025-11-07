@@ -29,8 +29,8 @@ const categories = [
     label: "Successful Projects",
     href: "/successful-projects",
     dropdown: [
-      { label: "China Projects", href: "/successful-projects/china" },
-      { label: "Overseas Projects", href: "/successful-projects/overseas" },
+      { label: "China Projects", href: "/successful-projects" },
+      { label: "Overseas Projects", href: "/successful-projects" },
     ],
   },
   {
@@ -38,19 +38,19 @@ const categories = [
     label: "About Us",
     href: "/about",
     dropdown: [
-      { label: "Why choose us", href: "/about/why-choose-us" },
-      { label: "Factory Overview", href: "/about/factory" },
-      { label: "History", href: "/about/history" },
-      { label: "Certificate", href: "/about/certificate" },
+      { label: "Why choose us", href: "/about" },
+      { label: "Factory Overview", href: "/about" },
+      { label: "History", href: "/about" },
+      { label: "Certificate", href: "/about" },
     ],
   },
   {
-    id: "news-blog",
-    label: "News & Blog",
-    href: "/news-blog",
+    id: "news-blogs",
+    label: "News & Blogs",
+    href: "/news-blogs",
     dropdown: [
-      { label: "Xinghong News", href: "/news-blog/news" },
-      { label: "Blog", href: "/news-blog/blog" },
+      { label: "Xinghong News", href: "/news-blogs/news" },
+      { label: "Blogs", href: "/news-blogs/blogs" },
     ],
   },
   {
