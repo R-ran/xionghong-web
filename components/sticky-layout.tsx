@@ -5,3 +5,11 @@ export const metadata: Metadata = {
   description: "Sticky Nav",
 }
 
+
+export default function StickyLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      {children}
+    </div>
+  )
+}

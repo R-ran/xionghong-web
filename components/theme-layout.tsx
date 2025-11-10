@@ -4,3 +4,11 @@ export const metadata: Metadata = {
   title: "Theme Provider",
   description: "Theme Provider",
 }
+
+export default function ThemeLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      {children}
+    </div>
+  )
+}

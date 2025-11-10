@@ -5,3 +5,11 @@ export const metadata: Metadata = {
   description: "Footer Contact Form",
 }
 
+
+export default function FooterLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      {children}
+    </div>
+  )
+} 

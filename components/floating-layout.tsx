@@ -5,3 +5,10 @@ export const metadata: Metadata = {
   description: "Floating Contact Bar",
 }
 
+export default function FloatingLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      {children}
+    </div>
+  )
+}

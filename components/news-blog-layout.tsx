@@ -5,3 +5,11 @@ export const metadata: Metadata = {
   description: "News & Blogs",
 }
 
+
+export default function NewsBlogLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      {children}
+    </div>
+  )
+}

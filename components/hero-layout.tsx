@@ -5,3 +5,11 @@ export const metadata: Metadata = {
   description: "Hero Carousel",
 }
 
+
+export default function HeroLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      {children}
+    </div>
+  )
+}

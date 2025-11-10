@@ -5,3 +5,11 @@ export const metadata: Metadata = {
   description: "Successful Projects",
 }
 
+
+export default function ProjectDetailLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      {children}
+    </div>
+  )
+}

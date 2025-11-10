@@ -5,3 +5,11 @@ export const metadata: Metadata = {
   description: "Top Header",
 }
 
+
+export default function TopLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      {children}
+    </div>
+  )
+}
