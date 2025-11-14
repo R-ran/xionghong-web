@@ -44,14 +44,12 @@ export async function getAboutSections(): Promise<AboutSection[]> {
 
   try {
     const res = await fetch(
-      `${wpApiUrl}/wp-json/wp/v2/about_section?per_page=100&_embed&status=publish&_=${Date.now()}`,
+      `${wpApiUrl}/wp-json/wp/v2/about_section?per_page=100&_embed&status=publish`,
       {
-        next: { revalidate: 60 }, // 减少缓存时间为1分钟便于开发
+        next: { revalidate: 3600 }, // 缓存1小时，允许静态生成
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-        },
-        cache: 'no-store' // 强制不使用缓存
+        }
       }
     )
 
@@ -200,11 +198,10 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
   const res = await fetch(
     `${wpApiUrl}/wp-json/wp/v2/successful_project?slug=${slug}&_embed&status=publish&_=${Date.now()}`,
     {
-      next: { revalidate: 60 },
+      next: { revalidate: 3600 },
       headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-      },
-      cache: 'no-store'
+        'Content-Type': 'application/json',
+      }
     }
   )
 
@@ -767,30 +764,45 @@ export async function getNewsBlogs(params: {
 
 /**
  * 获取单篇 News & Blog 文章详情
+ * @returns 文章详情，如果文章不存在则返回 null
  */
-export async function getNewsBlogDetail(id: string): Promise<NewsBlogArticle> {
+export async function getNewsBlogDetail(id: string): Promise<NewsBlogArticle | null> {
   const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
 
   if (!wpApiUrl) {
-    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+    console.warn('⚠️ NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+    return null
   }
 
   try {
     const res = await fetch(
-      `${wpApiUrl}/wp-json/wp/v2/news_blog/${id}?_embed=wp:featuredmedia&_=${Date.now()}`,
+      `${wpApiUrl}/wp-json/wp/v2/news_blog/${id}?_embed=wp:featuredmedia`,
       {
         next: { revalidate: 3600 },
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Content-Type': 'application/json',
         }
       }
     )
 
     if (!res.ok) {
-      throw new Error(`News & Blog detail API error: ${res.status}`)
+      // 如果是 404，返回 null 而不是抛出错误
+      if (res.status === 404) {
+        console.warn(`⚠️ Article ${id} not found (404)`)
+        return null
+      }
+      // 其他错误也返回 null，避免构建失败
+      console.warn(`⚠️ News & Blog detail API error: ${res.status} for article ${id}`)
+      return null
     }
 
     const post = await res.json()
+
+    // 验证返回的数据是否有效
+    if (!post || !post.id) {
+      console.warn(`⚠️ Invalid article data for ID ${id}`)
+      return null
+    }
 
     // 获取图片 URL
     const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || '/placeholder.svg'
@@ -824,8 +836,9 @@ export async function getNewsBlogDetail(id: string): Promise<NewsBlogArticle> {
     return article
 
   } catch (error) {
-    console.error(`❌ Failed to fetch article ${id}:`, error)
-    throw error
+    // 捕获所有错误，返回 null 而不是抛出，避免构建失败
+    console.warn(`⚠️ Failed to fetch article ${id}:`, error instanceof Error ? error.message : 'Unknown error')
+    return null
   }
 }
 

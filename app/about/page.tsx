@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   description: "Learn more about our company, team, and state-of-the-art manufacturing facilities.",
 }
 
+// 允许静态生成
+export const dynamic = 'force-static'
+export const revalidate = 3600 // 1小时重新验证
+
 export default async function AboutPage() {
   let sections: AboutSection[] = []
 

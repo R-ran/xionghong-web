@@ -17,8 +17,15 @@ export const metadata: Metadata = {
 
 // 修改：从WordPress获取所有文章路径
 export async function generateStaticParams() {
-  const paths = await getAllNewsBlogPaths()
-  return paths.map(({ id }) => ({ id }))
+  try {
+    const paths = await getAllNewsBlogPaths()
+    // 只返回有效的路径
+    return paths.filter(path => path.id && path.slug).map(({ id }) => ({ id }))
+  } catch (error) {
+    console.warn('⚠️ Failed to generate static params for news-blogs:', error)
+    // 返回空数组，避免构建失败
+    return []
+  }
 }
 
 // 修改：改为异步组件，从WordPress获取数据
