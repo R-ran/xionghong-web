@@ -1,45 +1,94 @@
+"use client"
+
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { ChevronDown } from "lucide-react"
 import { Metadata } from "next"
+import { useEffect, useState } from "react"
+import { getProducts } from "@/lib/wordpress"
+import type { Product } from "@/lib/wordpress"
 
 export const metadata: Metadata = {
   title: "Products",
   description: "Products",
 }
 
-const products = [
-  {
-    id: 1,
-    name: "XH self-drilling anchor bolt",
-    image: "/product1.jpg",
-    imageAlt: "Close-up of XH self-drilling anchor bolt components",
-    slug: "self-drilling-bolt",
-  },
-  {
-    id: 2,
-    name: "XH hollow grouted anchor bolt",
-    image: "/product2.jpg",
-    imageAlt: "XH hollow grouted anchor bolt with grout fittings",
-    slug: "hollow-grouted-bolt",
-  },
-  {
-    id: 3,
-    name: "Expansion-shell hollow anchor bolt",
-    image: "/product3.jpg",
-    imageAlt: "Expansion-shell hollow anchor bolt ready for installation",
-    slug: "expansion-shell-bolt",
-  },
-  {
-    id: 4,
-    name: "Fiberglass anchor bolt",
-    image: "/product4.jpg",
-    imageAlt: "Lightweight fiberglass anchor bolt for corrosion-sensitive projects",
-    slug: "fiberglass-anchor-bolt",
-  },
-]
-
 export function ProductsSection() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const { data: productsData } = await getProducts()
+        console.log('首页获取到的产品数据:', productsData)
+        if (productsData && productsData.length > 0) {
+          setProducts(productsData.slice(0, 4)) // 只显示前4个产品
+        }
+      } catch (error) {
+        console.error('Failed to fetch products:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
+
+  // Fallback static data if loading or error
+  const fallbackProducts = [
+    {
+      id: "1",
+      title: "XH self-drilling anchor bolt",
+      featured_image: "/product1.jpg",
+      imageAlt: "Close-up of XH self-drilling anchor bolt components",
+      slug: "self-drilling-bolt",
+    },
+    {
+      id: "2",
+      title: "XH hollow grouted anchor bolt",
+      featured_image: "/product2.jpg",
+      imageAlt: "XH hollow grouted anchor bolt with grout fittings",
+      slug: "hollow-grouted-bolt",
+    },
+    {
+      id: "3",
+      title: "Expansion-shell hollow anchor bolt",
+      featured_image: "/product3.jpg",
+      imageAlt: "Expansion-shell hollow anchor bolt ready for installation",
+      slug: "expansion-shell-bolt",
+    },
+    {
+      id: "4",
+      title: "Fiberglass anchor bolt",
+      featured_image: "/product4.jpg",
+      imageAlt: "Lightweight fiberglass anchor bolt for corrosion-sensitive projects",
+      slug: "fiberglass-anchor-bolt",
+    },
+  ]
+
+  const displayProducts = loading || !products || products.length === 0 ? fallbackProducts : products
+
+  // 根据产品slug或分类确定链接
+  const getProductCategoryLink = (product: any) => {
+    const slug = product.slug || ''
+
+    // 将产品映射到分类页面（使用查询参数）
+    if (slug.includes('self-drilling') || slug.includes('self_drilling')) {
+      return '/products?category=self-drilling'
+    } else if (slug.includes('hollow-grouted') || slug.includes('hollow_grouted')) {
+      return '/products?category=hollow-grouted'
+    } else if (slug.includes('expansion-shell') || slug.includes('expansion_shell')) {
+      return '/products?category=expansion-shell'
+    } else if (slug.includes('fiberglass')) {
+      return '/products?category=fiberglass'
+    } else if (slug.includes('accessor')) {
+      return '/products?category=accessories'
+    }
+
+    // 默认链接
+    return '/products'
+  }
   return (
     <section id="products" className="py-10 bg-background">
       <div className="container mx-auto px-4">
@@ -54,11 +103,14 @@ export function ProductsSection() {
 
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-            {products.map((product, index) => {
+            {displayProducts.map((product, index) => {
               const isImageTop = index % 2 === 0
+              const productImage = product.featured_image || product.image || "/placeholder.svg"
+              const productName = product.title || product.name || "Product"
+              const productImageAlt = product.imageAlt || productName
 
               return (
-                <Link key={product.id} href={`/products/${product.slug}`} className="block h-full">
+                <Link key={product.id} href={getProductCategoryLink(product)} className="block h-full">
                   <Card className="group h-full cursor-pointer overflow-hidden hover:shadow-lg transition-all bg-muted/20 rounded-none border-r last:border-r-0 py-0 gap-0 min-h-[540px]">
                     <CardContent className="p-0 h-full">
                       <div className="grid h-full grid-rows-[1fr_auto_1fr]">
@@ -67,9 +119,13 @@ export function ProductsSection() {
                             {/* Image on top */}
                             <div className="relative h-full w-full overflow-hidden bg-white">
                               <img
-                                src={product.image || "/placeholder.svg"}
-                                alt={product.imageAlt || product.name}
+                                src={productImage}
+                                alt={productImageAlt}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.src = "/placeholder.svg"
+                                }}
                               />
                             </div>
                             {/* Orange diamond icon */}
@@ -81,7 +137,7 @@ export function ProductsSection() {
                             {/* Text on bottom */}
                             <div className="flex h-full flex-col justify-center bg-muted/30 p-8 text-center space-y-6">
                               <h3 className="text-xl font-semibold leading-tight">
-                                {product.name}
+                                {productName}
                               </h3>
                               <div className="w-16 h-0.5 bg-foreground mx-auto" />
                               <p className="text-sm font-medium tracking-wide text-foreground/70 group-hover:text-primary transition-colors">
@@ -94,7 +150,7 @@ export function ProductsSection() {
                             {/* Text on top */}
                             <div className="flex h-full flex-col justify-center bg-muted/30 p-8 text-center space-y-6">
                               <h3 className="text-xl font-semibold leading-tight">
-                                {product.name}
+                                {productName}
                               </h3>
                               <div className="w-16 h-0.5 bg-foreground mx-auto" />
                               <p className="text-sm font-medium tracking-wide text-foreground/70 group-hover:text-primary transition-colors">
@@ -110,9 +166,13 @@ export function ProductsSection() {
                             {/* Image on bottom */}
                             <div className="relative h-full w-full overflow-hidden bg-white">
                               <img
-                                src={product.image || "/placeholder.svg"}
-                                alt={product.imageAlt || product.name}
+                                src={productImage}
+                                alt={productImageAlt}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.src = "/placeholder.svg"
+                                }}
                               />
                             </div>
                           </>

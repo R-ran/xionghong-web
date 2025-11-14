@@ -48,7 +48,7 @@ const aboutItems: Record<string, {
     title: "Certificate",
     description: "View our certifications and quality standards that demonstrate our commitment to excellence and safety.",
     detailedDescription: "Quality and safety are at the core of everything we do at SINOROCK. We have obtained numerous international certifications and quality standards that validate our commitment to excellence. Our certifications include ISO 9001:2015 for quality management systems, demonstrating our systematic approach to maintaining the highest standards in all our operations. These certifications are not just badges of honor—they represent our ongoing dedication to continuous improvement, rigorous quality control, and adherence to international best practices. We regularly undergo audits and assessments to ensure we maintain these standards and continue to exceed industry expectations.",
-    image: "/zhengshu.jpg",
+    image: "/certificate.jpg",
     imageAlt: "Wall showcasing SINOROCK quality and safety certifications",
     icon: Award,
   },

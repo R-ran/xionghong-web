@@ -5,21 +5,25 @@ import { TopHeader } from "@/components/top-header"
 import { StickyNav } from "@/components/sticky-nav"
 import { Footer } from "@/components/footer"
 import { notFound } from "next/navigation"
-
-import { articles, getArticleById } from "@/lib/news-blogs-data"
 import { Metadata } from "next"
+
+// 新增：导入WordPress API
+import { getNewsBlogDetail, getAllNewsBlogPaths } from "@/lib/wordpress"
 
 export const metadata: Metadata = {
   title: "News & Blogs",
   description: "News & Blogs",
 }
 
-export function generateStaticParams() {
-  return articles.map((article) => ({ id: article.id }))
+// 修改：从WordPress获取所有文章路径
+export async function generateStaticParams() {
+  const paths = await getAllNewsBlogPaths()
+  return paths.map(({ id }) => ({ id }))
 }
 
-export default function NewsArticlePage({ params }: { params: { id: string } }) {
-  const article = getArticleById(params.id)
+// 修改：改为异步组件，从WordPress获取数据
+export default async function NewsArticlePage({ params }: { params: { id: string } }) {
+  const article = await getNewsBlogDetail(params.id)
 
   if (!article) {
     notFound()
@@ -43,8 +47,8 @@ export default function NewsArticlePage({ params }: { params: { id: string } }) 
             <div className="w-full lg:w-1/2">
               <div className="relative w-full overflow-hidden rounded-xl bg-muted aspect-[4/5] lg:aspect-[3/4]">
                 <img
-                  src={article.image || "/placeholder.svg"}
-                  alt={article.imageAlt || article.title}
+                  src={article.featured_image || "/placeholder.svg"}
+                  alt={article.title}
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -53,22 +57,22 @@ export default function NewsArticlePage({ params }: { params: { id: string } }) 
             <div className="w-full space-y-6 lg:w-1/2">
               <div className="space-y-4">
                 <span className="inline-block bg-primary text-primary-foreground px-4 py-1 text-sm font-medium rounded">
-                  {article.category}
+                  {article.categories?.[0] || article.type}
                 </span>
                 <h1 className="text-4xl md:text-5xl font-bold text-balance">{article.title}</h1>
                 <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                   <span className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    {new Date(article.date).toLocaleDateString("en-US", {
+                    {new Date(article.publish_date).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
                     })}
                   </span>
-                  {article.author && (
+                  {article.author_name && (
                     <span className="flex items-center gap-2">
                       <PenLine className="h-4 w-4" />
-                      {article.author}
+                      {article.author_name}
                     </span>
                   )}
                 </div>
@@ -90,4 +94,3 @@ export default function NewsArticlePage({ params }: { params: { id: string } }) 
     </main>
   )
 }
-

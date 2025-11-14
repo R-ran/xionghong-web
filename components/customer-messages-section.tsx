@@ -80,7 +80,7 @@ export function CustomerMessagesSection() {
                       ))}
                     </div>
                   </div>
-                  <p className="text-muted-foreground mb-3">{message.message}</p>
+                  <p className="text-muted-foreground mb-4">{message.message}</p>
                   <p className="text-xs text-muted-foreground">{message.date}</p>
                 </CardContent>
               </Card>

@@ -1,0 +1,1139 @@
+// ==================== 接口定义 ====================
+
+export interface AboutSection {
+  id: string
+  title: string
+  subtitle: string
+  description: string
+  detailedDescription: string
+  icon: 'Award' | 'Factory' | 'Building2' | 'History' | 'Certificate'
+  image: string
+  imageAlt: string
+  href: string
+  order?: number
+}
+
+export interface Project {
+  id: string
+  title: string
+  excerpt: string
+  content: string
+  image: string
+  imageAlt: string  // ✅ 修复：添加缺失字段
+  location: string
+  date: string
+  slug: string
+  categories: string[]
+}
+
+export interface ProjectCategory {
+  id: string
+  name: string
+  slug: string
+  count: number
+}
+
+// ==================== About Sections API ====================
+
+export async function getAboutSections(): Promise<AboutSection[]> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+  
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined in .env.local')
+  }
+
+  try {
+    const res = await fetch(
+      `${wpApiUrl}/wp-json/wp/v2/about_section?per_page=100&_embed&status=publish&_=${Date.now()}`,
+      {
+        next: { revalidate: 60 }, // 减少缓存时间为1分钟便于开发
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
+        cache: 'no-store' // 强制不使用缓存
+      }
+    )
+
+    if (!res.ok) {
+      throw new Error(`WordPress API error: ${res.status} ${res.statusText}`)
+    }
+
+    const wpPosts = await res.json()
+    return transformAboutSections(wpPosts, wpApiUrl)
+
+  } catch (error) {
+    console.error('Failed to fetch from WordPress:', error)
+    throw error
+  }
+}
+
+async function transformAboutSections(wpPosts: any[], wpApiUrl: string): Promise<AboutSection[]> {
+  // 定义模块的固定顺序和默认图标 - why choose us 必须在第一个
+  const moduleOrder = ['why-choose-us', 'factory-overview', 'history', 'certificate', 'factory']
+
+  console.log('Expected module order:', moduleOrder)
+  const defaultIcons: Record<string, AboutSection['icon']> = {
+    'why-choose-us': 'Award',
+    'factory-overview': 'Factory',
+    'factory': 'Factory',
+    'history': 'History',
+    'certificate': 'Certificate',
+  }
+
+  const defaultDescriptions: Record<string, string> = {
+    'why-choose-us': 'Discover what sets us apart in the geotechnical anchoring industry with our commitment to quality and innovation.',
+    'factory-overview': 'Explore our state-of-the-art manufacturing facilities equipped with advanced technology and quality control systems.',
+    'factory': 'Explore our state-of-the-art manufacturing facilities equipped with advanced technology and quality control systems.',
+    'history': 'Learn about our journey from inception to becoming a leading provider of geotechnical anchoring solutions.',
+    'certificate': 'View our certifications and quality standards that demonstrate our commitment to excellence and safety.',
+  }
+
+  return Promise.all(
+    wpPosts.map(async (post: any) => {
+      const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url
+        || (post.featured_media ? await getMediaUrl(post.featured_media, wpApiUrl) : '/placeholder.svg')
+
+      const slug = post.slug
+      const sectionId = post.meta?.section_id || post.acf?.section_id || slug
+
+      console.log(`Processing post: ${post.title.rendered}, slug: ${slug}, order index: ${moduleOrder.indexOf(slug)}`)
+
+      // 从内容中提取描述作为fallback，如果没有excerpt的话
+      const contentText = post.content?.rendered?.replace(/<[^>]*>/g, '').trim() || ''
+      const excerptText = post.excerpt?.rendered?.replace(/<[^>]*>/g, '').trim() || ''
+
+      // 优先使用excerpt，如果没有则从content中截取前150个字符
+      let description = excerptText || contentText.substring(0, 150)
+      if (!description && defaultDescriptions[slug]) {
+        description = defaultDescriptions[slug]
+      }
+
+      return {
+        id: sectionId,
+        title: post.title.rendered,
+        subtitle: post.meta?.subtitle || post.acf?.subtitle || post.title.rendered,
+        description: description,
+        detailedDescription: post.content?.rendered || '',
+        icon: (post.meta?.icon || post.acf?.icon || defaultIcons[slug] || 'Award') as AboutSection['icon'],
+        image: imageUrl,
+        imageAlt: post.title.rendered,
+        href: `/about/${sectionId}`,
+        order: moduleOrder.indexOf(slug) !== -1 ? moduleOrder.indexOf(slug) : 999,
+      }
+    })
+  ).then(sections => {
+    // 按照order字段排序
+    const sortedSections = sections.sort((a, b) => {
+      const orderA = a.order || 999
+      const orderB = b.order || 999
+      console.log(`Comparing ${a.id} (order: ${orderA}) with ${b.id} (order: ${orderB})`)
+      return orderA - orderB
+    })
+    console.log('Sections after sorting:', sortedSections.map(s => ({ id: s.id, order: s.order, title: s.title })))
+    return sortedSections
+  })
+}
+
+// ==================== Projects API ====================
+
+export async function getProjects(): Promise<Project[]> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+  }
+
+  const res = await fetch(
+    `${wpApiUrl}/wp-json/wp/v2/successful_project?per_page=100&_embed&status=publish&_=${Date.now()}`,
+    {
+      next: { revalidate: 60 },
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      }
+    }
+  )
+
+  if (!res.ok) {
+    throw new Error(`Projects API error: ${res.status}`)
+  }
+
+  const wpPosts = await res.json()
+  console.log(`WordPress API返回 ${wpPosts.length} 个项目`)
+
+  // 简化调试信息
+  if (wpPosts.length > 0) {
+    console.log(`WordPress API返回 ${wpPosts.length} 个项目，开始处理ACF字段数据`)
+  }
+
+  return transformProjects(wpPosts, wpApiUrl)
+}
+
+export async function getProjectsByCategory(categorySlug: string): Promise<Project[]> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+  
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+  }
+
+  const res = await fetch(
+    `${wpApiUrl}/wp-json/wp/v2/successful_project?per_page=100&_embed&status=publish&project_category=${categorySlug}`,
+    { next: { revalidate: 3600 } }
+  )
+
+  if (!res.ok) {
+    throw new Error(`Projects by category API error: ${res.status}`)
+  }
+
+  const wpPosts = await res.json()
+  return transformProjects(wpPosts, wpApiUrl)
+}
+
+// ✅ 修复：删除重复声明，只保留一个函数
+export async function getProjectBySlug(slug: string): Promise<Project | null> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+  }
+
+  const res = await fetch(
+    `${wpApiUrl}/wp-json/wp/v2/successful_project?slug=${slug}&_embed&status=publish&_=${Date.now()}`,
+    {
+      next: { revalidate: 60 },
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
+      cache: 'no-store'
+    }
+  )
+
+  if (!res.ok) {
+    throw new Error(`Project by slug API error: ${res.status}`)
+  }
+
+  const wpPosts = await res.json()
+
+  if (wpPosts.length === 0) return null
+
+  // 详细调试：单个项目的ACF字段数据
+  console.log(`获取项目详情: ${wpPosts[0].title.rendered}，ACF字段数量: ${wpPosts[0].acf ? Object.keys(wpPosts[0].acf).length : 0}`)
+
+  const projects = await transformProjects(wpPosts, wpApiUrl)
+  return projects[0]
+}
+
+// ✅ 修复：删除重复声明，只保留一个函数
+export async function getProjectCategories(): Promise<ProjectCategory[]> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+  }
+
+  const res = await fetch(
+    `${wpApiUrl}/wp-json/wp/v2/project_category?per_page=100&_=${Date.now()}`,
+    {
+      next: { revalidate: 60 },
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      }
+    }
+  )
+
+  if (!res.ok) {
+    throw new Error(`Categories API error: ${res.status}`)
+  }
+
+  const wpCategories = await res.json()
+  console.log(`WordPress API返回 ${wpCategories.length} 个分类`)
+
+  return wpCategories.map((cat: any) => ({
+    id: cat.id.toString(),
+    name: cat.name,
+    slug: cat.slug,
+    count: cat.count,
+  }))
+}
+
+// ✅ 修复：统一的项目数据转换函数
+async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Project[]> {
+  return Promise.all(
+    wpPosts.map(async (post: any) => {
+      const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url
+        || (post.featured_media ? await getMediaUrl(post.featured_media, wpApiUrl) : '/placeholder.svg')
+
+      // 获取分类信息 - 支持多种方式获取分类
+      let categories: string[] = []
+
+      // 方式1：从 _embedded.wp:term 获取
+      if (post._embedded?.['wp:term']?.[0]) {
+        categories = post._embedded['wp:term'][0].map((cat: any) => cat.slug)
+      }
+
+      // 方式2：从 project_category 字段获取
+      else if (post.project_category && Array.isArray(post.project_category)) {
+        // 如果是分类ID数组，我们需要获取对应的slug
+        categories = post.project_category.map((catId: any) => catId.toString())
+      }
+
+      // 获取meta字段数据 - 支持多种可能的字段名和API端点
+      let location = ''
+      let date = ''
+
+      // 尝试多种方法获取ACF字段数据
+      let foundData = false
+
+      // 方法1: 从原始的post meta中获取数据
+      if (post.meta) {
+        location = post.meta.project_location || post.meta.location || post.meta.项目地点 || ''
+        date = post.meta.project_date || post.meta.date || post.meta.项目日期 || ''
+        if (location || date) foundData = true
+      }
+
+      // 方法2: 从meta_box中获取数据
+      if (!foundData && post.meta_box) {
+        location = post.meta_box.project_location || post.meta_box.location || post.meta_box.项目地点 || ''
+        date = post.meta_box.project_date || post.meta_box.date || post.meta_box.项目日期 || ''
+        if (location || date) foundData = true
+      }
+
+      // 方法3: 从acf中获取数据
+      if (!foundData && post.acf && Array.isArray(post.acf) === false) {
+        location = post.acf.project_location || post.acf.location || ''
+        date = post.acf.project_date || post.acf.date || ''
+        if (location || date) foundData = true
+      }
+
+      // 方法4: 通过ACF API获取
+      if (!foundData) {
+        const acfFields = await getACFFields(post.id, wpApiUrl)
+        if (acfFields && acfFields.acf) {
+          const acfData = acfFields.acf
+          location = acfData.project_location || acfData.location || ''
+          date = acfData.project_date || acfData.date || ''
+          if (location || date) foundData = true
+        }
+      }
+
+      // 方法5: 通过post meta API获取
+      if (!foundData) {
+        const metaFields = await getPostMetaFields(post.id, wpApiUrl)
+        if (metaFields) {
+          location = metaFields.project_location || metaFields.location || metaFields.项目地点 || location
+          date = metaFields.project_date || metaFields.date || metaFields.项目日期 || date
+          if (location || date) foundData = true
+        }
+      }
+
+      // 方法6: 直接查询meta字段（最后备用方案）
+      if (!foundData) {
+        try {
+          const locationMetaRes = await fetch(
+            `${wpApiUrl}/wp-json/wp/v2/posts/${post.id}?context=edit`,
+            {
+              next: { revalidate: 60 },
+              headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+              }
+            }
+          )
+
+          if (locationMetaRes.ok) {
+            const postData = await locationMetaRes.json()
+            if (postData.meta) {
+              // 尝试各种可能的meta键名
+              const possibleLocationKeys = [
+                'project_location', 'location', '项目地点',
+                'project_location_cn', 'project_location_en',
+                'field_project_location', 'field_location'
+              ]
+              const possibleDateKeys = [
+                'project_date', 'date', '项目日期',
+                'project_date_cn', 'project_date_en',
+                'field_project_date', 'field_date'
+              ]
+
+              for (const key of possibleLocationKeys) {
+                if (postData.meta[key] && postData.meta[key] !== '') {
+                  location = postData.meta[key]
+                  foundData = true
+                  break
+                }
+              }
+
+              for (const key of possibleDateKeys) {
+                if (postData.meta[key] && postData.meta[key] !== '') {
+                  date = postData.meta[key]
+                  foundData = true
+                  break
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('直接查询meta字段失败:', error)
+        }
+      }
+
+      // 如果没有找到位置信息，根据分类和项目标题提供更具体的默认值
+      if (!location) {
+        if (categories.includes('china-projects')) {
+          // 根据项目标题判断具体城市
+          const title = post.title.rendered.toLowerCase()
+          if (title.includes('北京') || title.includes('beijing')) {
+            location = 'Beijing, China'
+          } else if (title.includes('上海') || title.includes('shanghai')) {
+            location = 'Shanghai, China'
+          } else if (title.includes('广州') || title.includes('guangzhou')) {
+            location = 'Guangzhou, China'
+          } else if (title.includes('深圳') || title.includes('shenzhen')) {
+            location = 'Shenzhen, China'
+          } else {
+            location = 'China'
+          }
+        } else if (categories.includes('overseas-projects')) {
+          // 根据项目标题判断具体国家
+          const title = post.title.rendered.toLowerCase()
+          if (title.includes('美国') || title.includes('usa') || title.includes('america')) {
+            location = 'United States'
+          } else if (title.includes('欧洲') || title.includes('europe')) {
+            location = 'Europe'
+          } else if (title.includes('东南亚') || title.includes('southeast asia')) {
+            location = 'Southeast Asia'
+          } else if (title.includes('中东') || title.includes('middle east')) {
+            location = 'Middle East'
+          } else {
+            location = 'Overseas'
+          }
+        }
+      }
+
+      // 如果没有找到日期信息，从项目创建日期中提取年份
+      if (!date && post.date) {
+        const projectDate = new Date(post.date)
+        date = projectDate.getFullYear().toString()
+      }
+
+      if (!foundData) {
+      console.log(`未找到项目 "${post.title.rendered}" 的ACF字段数据，使用默认值: location=${location}, date=${date}`)
+    }
+
+      // 处理 excerpt：移除 HTML 标签并解码 HTML 实体
+      const cleanExcerpt = decodeHtmlEntities(post.excerpt?.rendered || '')
+
+      return {
+        id: post.id.toString(),
+        title: post.title.rendered,
+        excerpt: cleanExcerpt,
+        content: post.content.rendered,
+        image: imageUrl,
+        imageAlt: post.title.rendered,
+        location: location,
+        date: date,
+        slug: post.slug,
+        categories: categories,
+      }
+    })
+  )
+}
+
+// ==================== ACF和自定义字段辅助函数 ====================
+
+// 尝试通过ACF REST API获取字段数据
+async function getACFFields(postId: number, wpApiUrl: string): Promise<any> {
+  try {
+    // 方法1: 尝试ACF到REST API插件的端点
+    const acfRes = await fetch(
+      `${wpApiUrl}/wp-json/acf/v3/posts/${postId}`,
+      {
+        next: { revalidate: 60 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (acfRes.ok) {
+      const acfData = await acfRes.json()
+      return acfData.acf || {}
+    }
+
+    // 方法2: 尝试ACF v2 API
+    const acfV2Res = await fetch(
+      `${wpApiUrl}/wp-json/acf/v2/posts/${postId}`,
+      {
+        next: { revalidate: 60 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (acfV2Res.ok) {
+      const acfV2Data = await acfV2Res.json()
+      return acfV2Data.acf || {}
+    }
+
+    // 方法3: 尝试通过自定义文章类型的ACF端点
+    const customAcfRes = await fetch(
+      `${wpApiUrl}/wp-json/acf/v3/successful_project/${postId}`,
+      {
+        next: { revalidate: 60 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (customAcfRes.ok) {
+      const customAcfData = await customAcfRes.json()
+      return customAcfData.acf || {}
+    }
+
+    return {}
+  } catch (error) {
+    console.error('获取ACF字段数据失败:', error)
+    return {}
+  }
+}
+
+// 尝试通过WordPress post meta API获取字段数据
+async function getPostMetaFields(postId: number, wpApiUrl: string): Promise<Record<string, any>> {
+  try {
+    const metaRes = await fetch(
+      `${wpApiUrl}/wp-json/wp/v2/posts/${postId}?_embed&context=edit`,
+      {
+        next: { revalidate: 60 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (metaRes.ok) {
+      const postData = await metaRes.json()
+      return postData.meta || {}
+    }
+
+    return {}
+  } catch (error) {
+    console.error('获取post meta数据失败:', error)
+    return {}
+  }
+}
+
+// ==================== 通用工具函数 ====================
+
+/**
+ * 截断文本并移除 "read more" 相关文本
+ * @param text 要处理的文本
+ * @param maxLength 最大长度（默认 120）
+ * @returns 处理后的文本
+ */
+export function truncateExcerpt(text: string, maxLength: number = 120): string {
+  if (!text) return ''
+  
+  // 移除 "read more" 相关文本（不区分大小写）
+  // 注意：HTML 实体应该已经在 decodeHtmlEntities 中解码了
+  // 所以这里主要处理普通点和 Unicode 省略号
+  let cleaned = text
+  
+  // 使用更强大的正则表达式来匹配所有 "read more" 变体
+  // 匹配模式：可选的省略号/点（1-3个）+ 可选的空格 + read more + 可选的空格 + 可选的省略号/点（1-3个）
+  // 先匹配前后都有省略号的情况
+  cleaned = cleaned.replace(/\.{1,3}\s*[Rr]ead\s+[Mm]ore\s*\.{1,3}/gi, '')
+  cleaned = cleaned.replace(/…\s*[Rr]ead\s+[Mm]ore\s*…/gi, '')
+  cleaned = cleaned.replace(/\.{1,3}\s*…\s*[Rr]ead\s+[Mm]ore/gi, '')
+  cleaned = cleaned.replace(/[Rr]ead\s+[Mm]ore\s*…\s*\.{1,3}/gi, '')
+  
+  // 匹配前面有省略号的
+  cleaned = cleaned.replace(/\.{1,3}\s*[Rr]ead\s+[Mm]ore/gi, '')
+  cleaned = cleaned.replace(/…\s*[Rr]ead\s+[Mm]ore/gi, '')
+  
+  // 匹配后面有省略号的
+  cleaned = cleaned.replace(/[Rr]ead\s+[Mm]ore\s*\.{1,3}/gi, '')
+  cleaned = cleaned.replace(/[Rr]ead\s+[Mm]ore\s*…/gi, '')
+  
+  // 匹配单独的 read more（前后可能有空格、标点等）
+  cleaned = cleaned.replace(/\s*[Rr]ead\s+[Mm]ore\s*/gi, '')
+  
+  // 清理多余的标点和空格
+  cleaned = cleaned
+    // 清理连续的多个省略号（合并为一个）
+    .replace(/\.{4,}/g, '...')  // 4个或更多点合并为三个点
+    .replace(/…\s*…/g, '...')
+    // 清理多余的点和空格组合
+    .replace(/\s*\.{2,3}\s*\.{2,3}/g, '...')  // 多个省略号合并
+    .replace(/\s*…\s*\.{2,3}/g, '...')
+    .replace(/\s*\.{2,3}\s*…/g, '...')
+    // 清理末尾多余的省略号（只保留一个）
+    .replace(/\.{4,}$/g, '...')
+    // 清理开头和结尾的多余空格和标点
+    .replace(/^[\s\.…]+/, '')
+    .replace(/[\s\.…]+$/, '')
+    .trim()
+  
+  // 如果文本超过最大长度，截断并添加省略号
+  if (cleaned.length > maxLength) {
+    cleaned = cleaned.substring(0, maxLength).trim()
+    // 确保不以标点符号结尾（除非是省略号）
+    if (!cleaned.endsWith('...') && !cleaned.endsWith('…')) {
+      // 尝试在最后一个空格处截断
+      const lastSpace = cleaned.lastIndexOf(' ')
+      if (lastSpace > maxLength * 0.8) {
+        cleaned = cleaned.substring(0, lastSpace)
+      }
+      cleaned += '...'
+    }
+  }
+  
+  return cleaned
+}
+
+/**
+ * 解码 HTML 实体编码
+ * 将 HTML 实体（如 &#8230;、&hellip; 等）转换为普通字符
+ */
+function decodeHtmlEntities(text: string): string {
+  if (!text) return ''
+  
+  // 移除 HTML 标签
+  let decoded = text.replace(/<[^>]*>/g, '')
+  
+  // 处理常见的 HTML 实体
+  decoded = decoded
+    .replace(/&#8230;/g, '...')        // 省略号
+    .replace(/&hellip;/g, '...')       // 省略号
+    .replace(/&nbsp;/g, ' ')           // 非断行空格
+    .replace(/&amp;/g, '&')            // & 符号
+    .replace(/&lt;/g, '<')             // < 符号
+    .replace(/&gt;/g, '>')             // > 符号
+    .replace(/&quot;/g, '"')            // 双引号
+    .replace(/&#39;/g, "'")             // 单引号
+    .replace(/&apos;/g, "'")            // 单引号
+    // 处理数字实体（如 &#8230;）
+    .replace(/&#(\d+);/g, (match, dec) => {
+      const code = parseInt(dec, 10)
+      // 只处理有效的 Unicode 字符
+      if (code >= 0 && code <= 0x10FFFF) {
+        return String.fromCharCode(code)
+      }
+      return match
+    })
+    // 处理十六进制实体（如 &#x2026;）
+    .replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+      const code = parseInt(hex, 16)
+      // 只处理有效的 Unicode 字符
+      if (code >= 0 && code <= 0x10FFFF) {
+        return String.fromCharCode(code)
+      }
+      return match
+    })
+  
+  // 清理多余的空格和换行
+  decoded = decoded.trim().replace(/\s+/g, ' ')
+  
+  return decoded
+}
+
+async function getMediaUrl(mediaId: number, wpApiUrl: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `${wpApiUrl}/wp-json/wp/v2/media/${mediaId}`,
+      { next: { revalidate: 3600 } }
+    )
+
+    if (!res.ok) return '/placeholder.svg'
+
+    const media = await res.json()
+    return media.source_url || '/placeholder.svg'
+  } catch (error) {
+    console.error('Failed to fetch media:', error)
+    return '/placeholder.svg'
+  }
+}
+// ==================== News & Blogs API ====================
+
+export interface NewsBlogArticle {
+  id: string
+  title: string
+  content: string
+  excerpt: string
+  featured_image?: string
+  author_name?: string
+  publish_date: string
+  read_time?: string
+  type: 'news' | 'blogs'
+  categories: string[]
+  slug: string
+}
+
+/**
+ * 获取 News & Blogs 文章列表
+ * @param params.type - 可选：'news' | 'blogs' 用于过滤类型
+ */
+export async function getNewsBlogs(params: {
+  page?: number
+  perPage?: number
+  type?: 'news' | 'blogs'
+} = {}): Promise<{ data: NewsBlogArticle[]; total: number; total_pages: number }> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+  }
+
+  try {
+    // 构建查询参数
+    const queryParams = new URLSearchParams({
+      page: String(params.page || 1),
+      per_page: String(params.perPage || 10),
+      status: 'publish',
+      _embed: 'wp:featuredmedia', // 获取特色图片
+      _: Date.now().toString() // 防止缓存
+    })
+
+    // 如果指定了类型，使用 content_type 分类过滤
+    if (params.type) {
+      const contentTypeMap = {
+        'news': '18',   // 根据 WordPress 数据，news 的 content_type ID 是 18
+        'blogs': '19'   // 根据 WordPress 数据，blogs 的 content_type ID 是 19
+      }
+      queryParams.set('content_type', contentTypeMap[params.type])
+    }
+
+    const res = await fetch(
+      `${wpApiUrl}/wp-json/wp/v2/news_blog?${queryParams.toString()}`,
+      {
+        next: { revalidate: 60 }, // 1分钟缓存
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (!res.ok) {
+      throw new Error(`News & Blogs API error: ${res.status} ${res.statusText}`)
+    }
+
+    const wpPosts = await res.json()
+    const total = parseInt(res.headers.get('X-WP-Total') || '0')
+    const totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '0')
+
+    // 转换 WordPress 数据到前端格式
+    const articles: NewsBlogArticle[] = wpPosts.map((post: any) => {
+      // 获取图片 URL
+      const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || '/placeholder.svg'
+
+      // 确定 type (news 或 blogs)
+      const contentType = post.content_type?.[0] || post._embedded?.['wp:term']?.[2]?.[0]
+      const type = (contentType === 18 || contentType?.slug === 'news') ? 'news' : 'blogs'
+
+      // 获取分类
+      const categories = post._embedded?.['wp:term']?.[0]?.map((cat: any) => cat.name) || []
+
+      // 处理 excerpt：移除 HTML 标签并解码 HTML 实体
+      const cleanExcerpt = decodeHtmlEntities(post.excerpt?.rendered || '')
+
+      return {
+        id: post.id.toString(),
+        title: post.title.rendered,
+        content: post.content.rendered,
+        excerpt: cleanExcerpt,
+        featured_image: featuredImage,
+        author_name: post.acf?.author_name || 'Admin',
+        publish_date: post.acf?.publish_date || post.date?.split('T')[0] || '',
+        read_time: post.acf?.read_time || '',
+        type: type as 'news' | 'blogs',
+        categories: categories,
+        slug: post.slug
+      }
+    })
+
+    console.log(`✅ WordPress API返回 ${articles.length}篇 News & Blogs 文章`)
+
+    return {
+      data: articles,
+      total,
+      total_pages: totalPages
+    }
+
+  } catch (error) {
+    console.error('❌ Failed to fetch News & Blogs from WordPress:', error)
+    throw error
+  }
+}
+
+/**
+ * 获取单篇 News & Blog 文章详情
+ */
+export async function getNewsBlogDetail(id: string): Promise<NewsBlogArticle> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+  }
+
+  try {
+    const res = await fetch(
+      `${wpApiUrl}/wp-json/wp/v2/news_blog/${id}?_embed=wp:featuredmedia&_=${Date.now()}`,
+      {
+        next: { revalidate: 3600 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (!res.ok) {
+      throw new Error(`News & Blog detail API error: ${res.status}`)
+    }
+
+    const post = await res.json()
+
+    // 获取图片 URL
+    const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || '/placeholder.svg'
+
+    // 确定 type (news 或 blogs)
+    const contentType = post.content_type?.[0] || post._embedded?.['wp:term']?.[2]?.[0]
+    const type = (contentType === 18 || contentType?.slug === 'news') ? 'news' : 'blogs'
+
+    // 获取分类
+    const categories = post._embedded?.['wp:term']?.[0]?.map((cat: any) => cat.name) || []
+
+    // 处理 excerpt：移除 HTML 标签并解码 HTML 实体
+    const cleanExcerpt = decodeHtmlEntities(post.excerpt?.rendered || '')
+
+    const article: NewsBlogArticle = {
+      id: post.id.toString(),
+      title: post.title.rendered,
+      content: post.content.rendered,
+      excerpt: cleanExcerpt,
+      featured_image: featuredImage,
+      author_name: post.acf?.author_name || 'Admin',
+      publish_date: post.acf?.publish_date || post.date?.split('T')[0] || '',
+      read_time: post.acf?.read_time || '',
+      type: type as 'news' | 'blogs',
+      categories: categories,
+      slug: post.slug
+    }
+
+    console.log(`✅ 获取文章详情: ${article.title} (ID: ${article.id})`)
+
+    return article
+
+  } catch (error) {
+    console.error(`❌ Failed to fetch article ${id}:`, error)
+    throw error
+  }
+}
+
+/**
+ * 获取所有 News & Blogs 文章路径（用于 generateStaticParams）
+ */
+export async function getAllNewsBlogPaths(): Promise<Array<{ id: string; slug: string }>> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+  }
+
+  try {
+    const res = await fetch(
+      `${wpApiUrl}/wp-json/wp/v2/news_blog?per_page=100&fields=id,slug&_=${Date.now()}`,
+      {
+        next: { revalidate: 60 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (!res.ok) {
+      throw new Error(`News & Blogs paths API error: ${res.status}`)
+    }
+
+    const posts = await res.json()
+
+    console.log(`✅ 共获取 ${posts.length} 条 News & Blogs 路径`)
+
+    return posts.map((post: any) => ({
+      id: post.id.toString(),
+      slug: post.slug
+    }))
+
+  } catch (error) {
+    console.error('❌ Failed to fetch News & Blogs paths:', error)
+    // 返回空数组避免构建失败
+    return []
+  }
+}
+
+// ==================== 数据转换工具函数 ====================
+
+/**
+ * 转换WordPress News & Blogs数据到前端格式
+ * （目前API已返回标准格式，此函数保留以备未来扩展）
+ */
+export function transformNewsBlog(article: any): NewsBlogArticle {
+  return {
+    id: article.id.toString(),
+    title: article.title,
+    content: article.content,
+    excerpt: article.excerpt || '',
+    featured_image: article.featured_image,
+    author_name: article.author_name,
+    publish_date: article.publish_date,
+    read_time: article.read_time,
+    type: article.type,
+    categories: article.categories || [],
+    slug: article.slug,
+  }
+}
+
+
+// ==================== Products API ====================
+
+export interface Product {
+  id: string
+  title: string
+  slug: string
+  content: string
+  excerpt: string
+  featured_image?: string
+  model?: string
+  specs?: string
+  tech_params?: string
+  application_areas?: string
+  features?: Array<{ feature: string }>
+  case_images?: Array<{ url: string; alt?: string; id?: string }>  // Case studies images gallery
+  categories: string[]
+}
+
+/**
+ * 获取产品列表
+ */
+export async function getProducts(params: {
+  page?: number
+  perPage?: number
+  category?: string
+} = {}): Promise<{ data: Product[]; total: number; total_pages: number }> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+  }
+
+  try {
+    const queryParams = new URLSearchParams({
+      page: String(params.page || 1),
+      per_page: String(params.perPage || 12),
+      status: 'publish',
+      _embed: 'wp:featuredmedia,wp:term', // 获取特色图片和分类信息
+      _: Date.now().toString()
+    })
+
+    // 注意：不在 API 调用中传递分类参数，因为 WordPress REST API 
+    // 对于自定义文章类型可能不支持 categories 参数，或者使用了不同的 taxonomy 名称
+    // 我们将在客户端进行过滤，这样更可靠
+    // 如果需要在 API 端过滤，需要先获取 WordPress 中实际使用的 taxonomy 名称
+
+    const apiUrl = `${wpApiUrl}/wp-json/wp/v2/xinghongproduct?${queryParams.toString()}`
+    console.log(`🔗 WordPress API URL: ${apiUrl}`)
+
+    const res = await fetch(
+      apiUrl,
+      {
+        next: { revalidate: 3600 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (!res.ok) {
+      throw new Error(`Products API error: ${res.status}`)
+    }
+
+    const wpPosts = await res.json()
+    const total = parseInt(res.headers.get('X-WP-Total') || '0')
+    const totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '0')
+
+    console.log(`📊 WordPress API 返回 ${wpPosts.length} 个产品 (总计: ${total})`)
+
+    // 转换 WordPress 数据到前端格式
+    const products: Product[] = wpPosts.map((post: any) => {
+      // 获取图片 URL
+      const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || '/placeholder.svg'
+
+      // 获取分类 - 检查所有可能的 taxonomy terms
+      // WordPress 的 _embedded.wp:term 是一个数组，包含所有 taxonomies
+      let categories: string[] = []
+      if (post._embedded?.['wp:term']) {
+        // wp:term 是一个二维数组，每个元素是一个 taxonomy 的 terms 数组
+        // 通常第一个数组是主要的分类法（可能是 categories 或其他自定义分类法）
+        for (const termArray of post._embedded['wp:term']) {
+          if (Array.isArray(termArray)) {
+            const slugs = termArray.map((cat: any) => cat.slug)
+            categories.push(...slugs)
+          }
+        }
+      }
+      
+      // 去重
+      categories = [...new Set(categories)]
+
+      // 处理 ACF 字段
+      const acf = post.acf || {}
+
+      // 处理案例研究图片库
+      let caseImages: Array<{ url: string; alt?: string; id?: string }> = []
+      if (acf.case_studies_images && Array.isArray(acf.case_studies_images)) {
+        caseImages = acf.case_studies_images.map((img: any) => ({
+          url: img.url || img.sizes?.large?.url || img.sizes?.medium?.url || img,
+          alt: img.alt || img.title || `Case study image`,
+          id: img.id
+        }))
+      }
+
+      return {
+        id: post.id.toString(),
+        title: post.title.rendered,
+        slug: post.slug,
+        content: post.content.rendered,
+        excerpt: post.excerpt?.rendered?.replace(/<[^>]*>/g, '') || '',
+        featured_image: featuredImage,
+        model: acf.product_model || '',
+        specs: acf.product_specifications || '',
+        tech_params: acf.technical_parameters || '',
+        application_areas: acf.application_areas || '',
+        features: [], // 可以根据需要从其他字段获取
+        case_images: caseImages,
+        categories: categories
+      }
+    })
+
+    console.log(`✅ WordPress API返回 ${products.length} 个产品`)
+
+    return {
+      data: products,
+      total,
+      total_pages: totalPages
+    }
+
+  } catch (error) {
+    console.error('Failed to fetch products:', error)
+    throw error
+  }
+}
+
+/**
+ * 根据 slug 获取单个产品
+ */
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+  }
+
+  try {
+    const res = await fetch(
+      `${wpApiUrl}/wp-json/wp/v2/xinghongproduct?slug=${slug}&_embed=wp:featuredmedia&_=${Date.now()}`,
+      {
+        next: { revalidate: 3600 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (!res.ok) {
+      if (res.status === 404) return null
+      throw new Error(`Product detail API error: ${res.status}`)
+    }
+
+    const wpPosts = await res.json()
+
+    if (wpPosts.length === 0) return null
+
+    const post = wpPosts[0]
+
+    // 获取图片 URL
+    const featuredImage = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || '/placeholder.svg'
+
+    // 获取分类
+    const categories = post._embedded?.['wp:term']?.[0]?.map((cat: any) => cat.slug) || []
+
+    // 处理 ACF 字段
+    const acf = post.acf || {}
+
+    // 处理案例研究图片库
+    let caseImages: Array<{ url: string; alt?: string; id?: string }> = []
+    if (acf.case_studies_images && Array.isArray(acf.case_studies_images)) {
+      caseImages = acf.case_studies_images.map((img: any) => ({
+        url: img.url || img.sizes?.large?.url || img.sizes?.medium?.url || img,
+        alt: img.alt || img.title || `Case study image`,
+        id: img.id
+      }))
+    }
+
+    return {
+      id: post.id.toString(),
+      title: post.title.rendered,
+      slug: post.slug,
+      content: post.content.rendered,
+      excerpt: post.excerpt?.rendered?.replace(/<[^>]*>/g, '') || '',
+      featured_image: featuredImage,
+      model: acf.product_model || '',
+      specs: acf.product_specifications || '',
+      tech_params: acf.technical_parameters || '',
+      application_areas: acf.application_areas || '',
+      features: [], // 可以根据需要从其他字段获取
+      case_images: caseImages,
+      categories: categories
+    }
+
+  } catch (error) {
+    console.error(`Failed to fetch product ${slug}:`, error)
+    throw error
+  }
+}
+
+/**
+ * 获取所有产品路径（用于 generateStaticParams）
+ */
+export async function getAllProductSlugs(): Promise<Array<{ slug: string }>> {
+  const wpApiUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL
+
+  if (!wpApiUrl) {
+    throw new Error('NEXT_PUBLIC_WORDPRESS_API_URL is not defined')
+  }
+
+  try {
+    const res = await fetch(
+      `${wpApiUrl}/wp-json/wp/v2/xinghongproduct?per_page=100&fields=slug&_=${Date.now()}`,
+      {
+        next: { revalidate: 60 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (!res.ok) {
+      throw new Error(`Product slugs API error: ${res.status}`)
+    }
+
+    const posts = await res.json()
+
+    return posts.map((post: any) => ({
+      slug: post.slug
+    }))
+
+  } catch (error) {
+    console.error('Failed to fetch product slugs:', error)
+    return []
+  }
+}

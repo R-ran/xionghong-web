@@ -8,31 +8,11 @@ import { TopHeader } from "@/components/top-header"
 import { StickyNav } from "@/components/sticky-nav"
 import { Footer } from "@/components/footer"
 import { X, Download, Mail, Phone, Printer, MapPin, MessageSquare, Send } from "lucide-react"
-import { useState } from "react"
-import Image from "next/image"
+import { useState, useEffect } from "react"
+import { getProductBySlug } from "@/lib/wordpress"
+import type { Product } from "@/lib/wordpress"
 
-// 产品数据
-const productData: Record<string, {
-  title: string
-  description: string
-  image: string
-  imageAlt: string
-  introduction: string
-  functions: string
-  conditions: string[]
-}> = {
-  "r-thread-self-drilling-anchor-bolt": {
-    title: "R Thread Self Drilling Anchor Bolt System",
-    description: "R thread self drilling anchor bolt system performs drilling, grouting & anchoring in one step. Easy to process and no risks of drill have collagen. Suitable for unstable conditions.",
-    image: "/product1.jpg",
-    imageAlt: "R thread self-drilling anchor bolt system components laid out for installation",
-    introduction: "R thread self drilling anchor bolt system is composed by hollow rock bolt, anchor nut, anchor plate, anchor coupler, drill bit, centralizer, and the hollow anchor bars can be cut and lengthened by coupling on request.",
-    functions: "R thread self drilling anchor bolt system is an advanced system which can ensure the anchoring effect for complex ground conditions. It can be integrated with the functions of drilling, grouting and anchoring.",
-    conditions: ["Tunneling", "Mining", "Slope Stabilization", "Foundation Support"],
-  },
-}
-
-// 产品列表
+// 产品列表（保持静态）
 const productCategories = [
   { name: "XH self-drilling anchor bolt", slug: "self-drilling-bolt" },
   { name: "XH hollow grouted anchor bolt", slug: "hollow-grouted-bolt" },
@@ -41,47 +21,185 @@ const productCategories = [
   { name: "Accessories", slug: "accessories" },
 ]
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const slug = params?.slug || ""
-  // 根据slug映射到对应的图片
-  const defaultProductImages: Record<string, { src: string; alt: string }> = {
-    "self-drilling-bolt": {
-      src: "/product1.jpg",
-      alt: "XH self-drilling anchor bolt assembly on display",
-    },
-    "hollow-grouted-bolt": {
-      src: "/product2.jpg",
-      alt: "XH hollow grouted anchor bolt with couplers and plates",
-    },
-    "expansion-shell-bolt": {
-      src: "/product4.jpg",
-      alt: "Expansion-shell hollow anchor bolt demonstrating shell mechanism",
-    },
-    "fiberglass-bolt": {
-      src: "/product3.jpg",
-      alt: "Fiberglass anchor bolt solution for corrosion-sensitive environments",
-    },
-    accessories: {
-      src: "/product1.jpg",
-      alt: "Selection of SINOROCK self-drilling anchor bolt accessories",
-    },
-  }
-
-  const getImageBySlug = (slug: string) => defaultProductImages[slug]?.src || "/product1.jpg"
-  const getImageAltBySlug = (slug: string) => defaultProductImages[slug]?.alt || "SINOROCK anchor bolt system"
-
-  const product = productData[slug] || {
-    title: slug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-    description: "High-quality anchoring solution designed for demanding geotechnical applications.",
-    image: getImageBySlug(slug),
-    imageAlt: getImageAltBySlug(slug),
-    introduction: "This product is designed for various geotechnical applications.",
-    functions: "Provides reliable anchoring solutions for complex ground conditions.",
-    conditions: ["Tunneling", "Mining", "Slope Stabilization"],
-  }
-  
+export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const [slug, setSlug] = useState<string>("")
+  const [product, setProduct] = useState<Product | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [activeTab, setActiveTab] = useState("introduction")
+
+  // Handle async params
+  useEffect(() => {
+    const getSlug = async () => {
+      const resolvedParams = await params
+      setSlug(resolvedParams.slug || "")
+    }
+    getSlug()
+  }, [params])
+
+  useEffect(() => {
+    if (!slug) return // 等待 slug 被设置
+
+    async function loadProduct() {
+      try {
+        const data = await getProductBySlug(slug)
+        if (data) {
+          setProduct(data)
+        } else {
+          // 如果没有找到产品，设置默认产品数据
+          setProduct(getDefaultProductData(slug))
+        }
+      } catch (error) {
+        console.error("Failed to load product from WordPress, using fallback:", error)
+        // 出错时使用默认产品数据
+        setProduct(getDefaultProductData(slug))
+      }
+    }
+    loadProduct()
+  }, [slug])
+
+  // 根据slug获取默认产品数据
+  const getDefaultProductData = (productSlug: string): Product => {
+    const defaultProducts: Record<string, Product> = {
+      "self-drilling-bolt": {
+        id: "self-drilling-1",
+        title: "XH Self-Drilling Anchor Bolt",
+        slug: "self-drilling-bolt",
+        content: "<p>The XH Self-Drilling Anchor Bolt is a revolutionary anchoring system that combines drilling and anchoring in one operation. This innovative design significantly reduces installation time and costs while providing superior holding capacity in various ground conditions.</p><p>Key features include hollow steel body for simultaneous drilling and grouting, hardened drill bit for efficient penetration, and reliable thread connection for assured load transfer.</p>",
+        excerpt: "High-efficiency self-drilling anchor bolt system for rock and soil reinforcement. Suitable for various geological conditions.",
+        featured_image: "/placeholder.svg",
+        model: "XH-25, XH-32, XH-40",
+        specs: "Diameter: 25-40mm, Length: 1.0-6.0m, Tensile Strength: ≥600MPa",
+        tech_params: "Drilling Speed: 0.5-1.0m/min, Grouting Pressure: 1.5-3.0MPa",
+        application_areas: "Tunneling, Slope Stabilization, Mining, Foundation Engineering",
+        features: [
+          { feature: "Combined drilling and anchoring in one operation" },
+          { feature: "High tensile strength and corrosion resistance" },
+          { feature: "Suitable for various geological conditions" },
+          { feature: "Reduced installation time and costs" }
+        ],
+        case_images: [],
+        categories: ["self-drilling"]
+      },
+      "hollow-grouted-bolt": {
+        id: "hollow-grouted-1",
+        title: "XH Hollow Grouted Anchor Bolt",
+        slug: "hollow-grouted-bolt",
+        content: "<p>The XH Hollow Grouted Anchor Bolt features a hollow design that allows for efficient grouting during installation. This system provides excellent load-bearing capacity and long-term durability in challenging ground conditions.</p>",
+        excerpt: "Advanced hollow grouted anchor system with superior corrosion resistance and high load-bearing capacity.",
+        featured_image: "/placeholder.svg",
+        model: "XH-G-25, XH-G-32, XH-G-40",
+        specs: "Diameter: 25-40mm, Length: 1.0-6.0m, Hollow Diameter: 15-25mm",
+        tech_params: "Grouting Pressure: 1.5-3.0MPa, Bond Strength: ≥15MPa",
+        application_areas: "Underground Works, Slope Protection, Rock Reinforcement",
+        features: [
+          { feature: "Efficient grouting through hollow body" },
+          { feature: "Superior corrosion resistance" },
+          { feature: "High load-bearing capacity" },
+          { feature: "Long-term durability" }
+        ],
+        case_images: [],
+        categories: ["hollow-grouted"]
+      },
+      "expansion-shell-bolt": {
+        id: "expansion-shell-1",
+        title: "Expansion-Shell Hollow Anchor Bolt",
+        slug: "expansion-shell-bolt",
+        content: "<p>The Expansion-Shell Hollow Anchor Bolt provides immediate support upon installation through mechanical expansion. This system is ideal for applications requiring instant load-bearing capacity.</p>",
+        excerpt: "Reliable expansion-shell anchor system for immediate support in tunneling and mining applications.",
+        featured_image: "/placeholder.svg",
+        model: "ES-25, ES-32, ES-40",
+        specs: "Shell Diameter: 45-65mm, Bolt Diameter: 25-40mm",
+        tech_params: "Expansion Force: 200-500kN, Installation Torque: 150-300Nm",
+        application_areas: "Tunneling, Mining, Cavern Construction",
+        features: [
+          { feature: "Immediate support upon installation" },
+          { feature: "Mechanical expansion mechanism" },
+          { feature: "High initial load capacity" },
+          { feature: "Easy installation" }
+        ],
+        case_images: [],
+        categories: ["expansion-shell"]
+      },
+      "fiberglass-bolt": {
+        id: "fiberglass-1",
+        title: "Fiberglass Anchor Bolt",
+        slug: "fiberglass-bolt",
+        content: "<p>The Fiberglass Anchor Bolt offers excellent corrosion resistance and electrical insulation properties. Made from high-strength composite materials, it's ideal for permanent applications and special environments.</p>",
+        excerpt: "Non-metallic fiberglass anchor system with excellent corrosion resistance for permanent applications.",
+        featured_image: "/placeholder.svg",
+        model: "FG-22, FG-25, FG-32",
+        specs: "Diameter: 22-32mm, Length: 1.0-6.0m, Tensile Strength: ≥800MPa",
+        tech_params: "Elastic Modulus: 40-50GPa, Density: 1.9-2.1g/cm³",
+        application_areas: "Permanent Structures, Marine Environment, Chemical Plants",
+        features: [
+          { feature: "Excellent corrosion resistance" },
+          { feature: "Electrical insulation properties" },
+          { feature: "Lightweight and high strength" },
+          { feature: "Permanent application suitable" }
+        ],
+        case_images: [],
+        categories: ["fiberglass"]
+      },
+      "accessories": {
+        id: "accessories-1",
+        title: "Anchor Bolt Accessories",
+        slug: "accessories",
+        content: "<p>Complete range of accessories designed to complement our anchor bolt systems. All accessories are manufactured to the highest quality standards to ensure system compatibility and performance.</p>",
+        excerpt: "Complete range of accessories including plates, nuts, couplers, and drilling tools for anchor bolt systems.",
+        featured_image: "/placeholder.svg",
+        model: "Various Models Available",
+        specs: "Standard: ASTM, GB, DIN Custom sizes available",
+        tech_params: "Material: Steel 45#, Stainless Steel Available",
+        application_areas: "All Anchor Bolt Applications",
+        features: [
+          { feature: "Complete range of accessories" },
+          { feature: "High quality manufacturing" },
+          { feature: "System compatibility" },
+          { feature: "Custom sizes available" }
+        ],
+        case_images: [],
+        categories: ["accessories"]
+      }
+    }
+
+    return defaultProducts[productSlug] || {
+      id: "default",
+      title: productSlug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+      slug: productSlug,
+      content: "<p>Product information is being updated. Please contact us for more details.</p>",
+      excerpt: "High-quality anchoring solution designed for demanding geotechnical applications.",
+      featured_image: "/placeholder.svg",
+      model: "",
+      specs: "",
+      tech_params: "",
+      application_areas: "",
+      features: [],
+      case_images: [],
+      categories: []
+    }
+  }
+
+  // 获取产品数据或默认值（保持你原来的fallback逻辑）
+  const productTitle = product?.title || slug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+  const productImage = product?.featured_image || "/product1.jpg"
+  const productImageAlt = product?.title || "SINOROCK anchor bolt system"
+  const productDescription = product?.excerpt || "High-quality anchoring solution designed for demanding geotechnical applications."
+  const productContent = product?.content || "Product introduction and detailed description."
+  
+  // ACF 字段映射（根据你的接口定义）
+  const productModel = product?.model || ""
+  const productSpecs = product?.specs || ""
+  const techParams = product?.tech_params || ""
+  const applicationAreas = product?.application_areas || ""
+  const productFeatures = product?.features || []
+
+  // Case studies images from ACF gallery field
+  const caseStudiesImages = product?.case_images || []
+
+  // 将特性数组转换为 conditions 格式
+  const conditions = productFeatures.length > 0 
+    ? productFeatures.map((f: any) => f.feature)
+    : ["Tunneling", "Mining", "Slope Stabilization"]
 
   // 处理表单提交
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -104,12 +222,12 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                 <span className="text-primary">PRODUCTS</span>
               </h1>
               <p className="text-muted-foreground text-sm">
-                world's leading self drilling anchor bolt manufacturer.
+                world&apos;s leading self drilling anchor bolt manufacturer.
               </p>
             </div>
             <div className="text-muted-foreground text-sm">
               Your Position : <Link href="/" className="hover:text-primary">Home</Link> &gt;{" "}
-              <Link href="/products" className="hover:text-primary">Products</Link> &gt; {product.title}
+              <Link href="/products" className="hover:text-primary">Products</Link> &gt; {productTitle}
             </div>
           </div>
         </div>
@@ -189,12 +307,11 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                   {/* Product Image */}
                   <div className="bg-muted rounded-lg overflow-hidden h-96 md:h-[500px] relative">
                     <img
-                      src={product.image || "/product1.jpg"}
-                      alt={product.imageAlt || product.title}
+                      src={productImage}
+                      alt={productImageAlt}
                       className="w-full h-full object-cover"
                       style={{ minHeight: "100%" }}
                       onError={(e) => {
-                        // 如果图片加载失败，使用占位符
                         const target = e.target as HTMLImageElement
                         if (!target.src.includes("placeholder")) {
                           target.src = "/placeholder.svg?height=500&width=500"
@@ -206,8 +323,8 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                   {/* Product Details */}
                   <div className="space-y-6">
                     <div>
-                      <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">{product.title}</h2>
-                      <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">{productTitle}</h2>
+                      <p className="text-muted-foreground leading-relaxed">{productDescription}</p>
                     </div>
                     <div className="flex gap-4">
                       <Button
@@ -263,17 +380,19 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                 <div className="p-6">
                   {activeTab === "introduction" && (
                     <div className="space-y-6">
-                      <p className="text-muted-foreground leading-relaxed">{product.introduction}</p>
+                      <p className="text-muted-foreground leading-relaxed">{productContent}</p>
                       
-                      <div>
-                        <h3 className="text-xl font-semibold mb-3">Functions:</h3>
-                        <p className="text-muted-foreground leading-relaxed">{product.functions}</p>
-                      </div>
+                      {applicationAreas && (
+                        <div>
+                          <h3 className="text-xl font-semibold mb-3">Application Areas:</h3>
+                          <p className="whitespace-pre-line text-muted-foreground">{applicationAreas}</p>
+                        </div>
+                      )}
 
                       <div>
-                        <h3 className="text-xl font-semibold mb-3">Conditions:</h3>
+                        <h3 className="text-xl font-semibold mb-3">Application Conditions:</h3>
                         <ul className="space-y-2 text-muted-foreground">
-                          {product.conditions.map((condition, index) => (
+                          {conditions.map((condition: string, index: number) => (
                             <li key={index}>• {condition}</li>
                           ))}
                         </ul>
@@ -282,15 +401,32 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                       <div>
                         <h3 className="text-xl font-semibold mb-4">Cases</h3>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <div key={i} className="aspect-video bg-muted rounded-lg overflow-hidden">
-                              <img
-                                src={`/placeholder.svg?height=200&width=300&query=case${i}`}
-                                alt={`Illustrative case study ${i} featuring ${product.title}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ))}
+                          {caseStudiesImages.length > 0 ? (
+                            caseStudiesImages.map((image: any, index: number) => (
+                              <div key={index} className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                <img
+                                  src={image.url || image}
+                                  alt={`Case study ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = "/placeholder.svg?height=200&width=300"
+                                  }}
+                                />
+                              </div>
+                            ))
+                          ) : (
+                            // Fallback to placeholder images if no WordPress images
+                            [1, 2, 3, 4, 5, 6].map((i) => (
+                              <div key={i} className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                <img
+                                  src={`/placeholder.svg?height=200&width=300&query=case${i}`}
+                                  alt={`Illustrative case study ${i}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
@@ -302,77 +438,29 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                         <table className="w-full border-collapse">
                           <thead>
                             <tr className="bg-gray-700 text-white">
-                              <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Size</th>
-                              <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Outer Dia. (mm)</th>
-                              <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Application Range (Advice)</th>
+                              <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Parameter</th>
+                              <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Value</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {/* EX Category */}
-                            <tr className="bg-gray-200">
-                              <td colSpan={3} className="border border-gray-300 px-4 py-2 font-semibold text-gray-800">EX</td>
-                            </tr>
-                            <tr className="bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">SSR25/42</td>
-                              <td className="border border-gray-300 px-4 py-2">42</td>
-                              <td rowSpan={2} className="border border-gray-300 px-4 py-2">Sand, fills, gravel</td>
-                            </tr>
-                            <tr className="bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">SSR25/51</td>
-                              <td className="border border-gray-300 px-4 py-2">51</td>
-                            </tr>
-                            
-                            {/* EXX Category */}
-                            <tr className="bg-gray-200">
-                              <td colSpan={3} className="border border-gray-300 px-4 py-2 font-semibold text-gray-800">EXX</td>
-                            </tr>
-                            <tr className="bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">SSR25/42</td>
-                              <td className="border border-gray-300 px-4 py-2">42</td>
-                              <td rowSpan={2} className="border border-gray-300 px-4 py-2">Softer sedimentary rocks such as marls, mudstones, siltstone</td>
-                            </tr>
-                            <tr className="bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">SSR25/51</td>
-                              <td className="border border-gray-300 px-4 py-2">51</td>
-                            </tr>
-                            
-                            {/* ES-F Category */}
-                            <tr className="bg-gray-200">
-                              <td colSpan={3} className="border border-gray-300 px-4 py-2 font-semibold text-gray-800">ES-F</td>
-                            </tr>
-                            <tr className="bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">SSR25/42</td>
-                              <td className="border border-gray-300 px-4 py-2">42</td>
-                              <td rowSpan={2} className="border border-gray-300 px-4 py-2">Gravel, soft rock</td>
-                            </tr>
-                            <tr className="bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">SSR25/51</td>
-                              <td className="border border-gray-300 px-4 py-2">57.5</td>
-                            </tr>
-                            
-                            {/* ESS-F Category */}
-                            <tr className="bg-gray-200">
-                              <td colSpan={3} className="border border-gray-300 px-4 py-2 font-semibold text-gray-800">ESS-F</td>
-                            </tr>
-                            <tr className="bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">SSR25/42</td>
-                              <td className="border border-gray-300 px-4 py-2">42</td>
-                              <td rowSpan={2} className="border border-gray-300 px-4 py-2">Weathered rock, stone walls, rubble</td>
-                            </tr>
-                            <tr className="bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">SSR25/51</td>
-                              <td className="border border-gray-300 px-4 py-2">51</td>
-                            </tr>
-                            
-                            {/* EY Category */}
-                            <tr className="bg-gray-200">
-                              <td colSpan={3} className="border border-gray-300 px-4 py-2 font-semibold text-gray-800">EY</td>
-                            </tr>
-                            <tr className="bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">SSR25/51</td>
-                              <td className="border border-gray-300 px-4 py-2">51</td>
-                              <td className="border border-gray-300 px-4 py-2">Competent ground, strong rock</td>
-                            </tr>
+                            {productSpecs && (
+                              <tr className="bg-gray-50">
+                                <td className="border border-gray-300 px-4 py-2 font-semibold">Specifications</td>
+                                <td className="border border-gray-300 px-4 py-2">{productSpecs}</td>
+                              </tr>
+                            )}
+                            {techParams && (
+                              <tr className="bg-gray-50">
+                                <td className="border border-gray-300 px-4 py-2 font-semibold">Technical Parameters</td>
+                                <td className="border border-gray-300 px-4 py-2">{techParams}</td>
+                              </tr>
+                            )}
+                            {productModel && (
+                              <tr className="bg-gray-50">
+                                <td className="border border-gray-300 px-4 py-2 font-semibold">Model</td>
+                                <td className="border border-gray-300 px-4 py-2">{productModel}</td>
+                              </tr>
+                            )}
                           </tbody>
                         </table>
                       </div>

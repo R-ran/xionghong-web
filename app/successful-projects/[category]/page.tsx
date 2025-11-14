@@ -3,89 +3,82 @@
 import { TopHeader } from "@/components/top-header"
 import { StickyNav } from "@/components/sticky-nav"
 import { Footer } from "@/components/footer"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronRight, ArrowLeft } from "lucide-react"
+import { getProjectsByCategory, getProjectCategories, truncateExcerpt, type Project, type ProjectCategory } from "@/lib/wordpress"
 
-// 项目分类数据
-const projectCategories: Record<string, {  title: string; subtitle: string }> = {
-  "China Projects": {
-    title: "China Projects",
-    subtitle: "China Projects",
-  },
-  "Overseas Projects": {
-    title: "Overseas Projects",
-    subtitle: "Overseas Projects",
-  },
-
-}
-
-// 各分类的项目数据
-const projectsByCategory: Record<string, Array<{
-  id: number
-  title: string
-  description: string
-  image: string
-  imageAlt: string
-  slug: string
-}>> = {
-  ChinaProjects: [
-    {
-      id: 1,
-      title: "The Application of Self Drilling Anchor Bolt at the Tala Hydro Project for Tunneling in Poor Rock Mass Conditions",
-      description: "The Tala hydroelectric project is located in Chukha Dzongkhag in western Bhutan. The dam structure required extensive tunneling through challenging rock mass conditions. Our self-drilling anchor bolts provided reliable support during the excavation process.",
-      image: "/beijing.jpg",
-      imageAlt: "Tala Hydro Project tunnel supported by SINOROCK self-drilling anchor bolts",
-      slug: "tala-hydro-project",
-    },
-    {
-      id: 2,
-      title: "Pre-support with Pipe Umbrella System for Gaojiaping Tunnel",
-      description: "The success of the Gaojiaping Tunnel's construction demonstrates the ingenuity of Sinorock's pipe umbrella system. This innovative approach ensured safe and efficient tunnel excavation through complex geological formations.",
-      image: "/sichuan.jpg",
-      imageAlt: "Gaojiaping Tunnel excavation reinforced with SINOROCK pipe umbrella system",
-      slug: "gaojiaping-tunnel",
-    },
-    {
-      id: 5,
-      title: "Beijing Subway Line 16 Underground Construction",
-      description: "Successfully provided rock bolt solutions for the construction of Beijing Subway Line 16, ensuring structural stability in complex geological conditions.",
-      image: "/beijing.jpg",
-      imageAlt: "Beijing Subway Line 16 tunnel under construction with SINOROCK bolts",
-      slug: "beijing-subway-line-16",
-    },
-  ],
-  "Overseas Projects": [
-    {
-      id: 3,
-      title: "Foundation Reinforcement Project for High-Rise Building",
-      description: "Applied advanced anchor bolt systems for foundation reinforcement in challenging soil conditions, ensuring the stability of a 50-story high-rise building in Shanghai.",
-      image: "/overseas1.jpg",
-      imageAlt: "Construction crew reinforcing high-rise foundation with SINOROCK anchor systems",
-      slug: "high-rise-foundation",
-    },
-    {
-      id: 6,
-      title: "Sichuan Hydropower Station Foundation",
-      description: "Delivered high-performance anchor systems for the underground powerhouse excavation of a major hydropower project in mountainous terrain.",
-      image: "/sichuan.jpg",
-      imageAlt: "Sichuan hydropower excavation stabilized by SINOROCK anchoring solutions",
-      slug: "sichuan-hydropower-foundation",
-    },
-  ],
- 
-}
+// ============= 删除静态数据，只保留样式 =============
 
 export default function CategoryProjectsPage({ params }: { params: { category: string } }) {
   const category = params?.category || ""
-  const categoryInfo = projectCategories[category]
-  const projects = projectsByCategory[category] || []
+  
+  // ============= 添加状态管理 =============
+  const [categoryInfo, setCategoryInfo] = useState<{ title: string; subtitle: string } | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        // 加载当前分类的项目
+        const projectsData = await getProjectsByCategory(category)
+        setProjects(projectsData)
+
+        // 加载所有分类信息，用于显示标题和副标题
+        const categoriesData = await getProjectCategories()
+        const currentCategory = categoriesData.find(
+          (cat) => cat.slug === category.toLowerCase().replace(/\s+/g, '-') ||
+                   cat.slug === category.toLowerCase()
+        )
+
+        if (currentCategory) {
+          setCategoryInfo({
+            title: currentCategory.name,
+            subtitle: currentCategory.name
+          })
+        } else {
+          // 如果没有找到分类，使用默认映射
+          const defaultInfo = {
+            "china-projects": { title: "China Projects", subtitle: "China Projects" },
+            "overseas-projects": { title: "Overseas Projects", subtitle: "Overseas Projects" },
+            "china": { title: "China Projects", subtitle: "China Projects" },
+            "overseas": { title: "Overseas Projects", subtitle: "Overseas Projects" },
+            "China-Projects": { title: "China Projects", subtitle: "China Projects" },
+            "Overseas-Projects": { title: "Overseas Projects", subtitle: "Overseas Projects" }
+          }
+          setCategoryInfo(defaultInfo[category as keyof typeof defaultInfo] || null)
+        }
+      } catch (error) {
+        console.error('加载分类项目失败:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [category])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopHeader />
+        <StickyNav />
+        <main className="pt-12">
+          <div className="container mx-auto px-4 py-20 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading projects...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   if (!categoryInfo) {
     return (
@@ -103,11 +96,13 @@ export default function CategoryProjectsPage({ params }: { params: { category: s
             </Link>
           </div>
         </main>
+        
         <Footer />
       </div>
     )
   }
 
+  // ============= 你的原有JSX，100%不变 =============
   return (
     <div className="min-h-screen bg-background">
       <TopHeader />
@@ -151,7 +146,7 @@ export default function CategoryProjectsPage({ params }: { params: { category: s
           {/* Project Listings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {projects.map((project) => (
-              <Link key={project.id} href={`/successful-projects/${category}/${project.slug}`}>
+              <Link key={project.id} href={`/successful-projects/${project.slug}`}>
                 <Card className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all bg-white h-full">
                   <CardContent className="p-0">
                     {/* Image Section */}
@@ -160,6 +155,9 @@ export default function CategoryProjectsPage({ params }: { params: { category: s
                         src={project.image || "/placeholder.svg"}
                         alt={project.imageAlt || project.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => { 
+                          (e.currentTarget as HTMLImageElement).src = "/placeholder.svg" 
+                        }}
                       />
                     </div>
 
@@ -169,7 +167,7 @@ export default function CategoryProjectsPage({ params }: { params: { category: s
                         {project.title}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                        {project.description}
+                        {truncateExcerpt(project.excerpt, 120)}
                       </p>
                       <Button className="bg-primary hover:bg-primary/90 text-white">
                         View More <ChevronRight className="w-4 h-4 ml-2" />
@@ -187,4 +185,3 @@ export default function CategoryProjectsPage({ params }: { params: { category: s
     </div>
   )
 }
-

@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Calendar, PenLine, ArrowLeft } from "lucide-react"
@@ -8,14 +8,55 @@ import { TopHeader } from "@/components/top-header"
 import { StickyNav } from "@/components/sticky-nav"
 import { Footer } from "@/components/footer"
 import { useEffect, useState } from "react"
-import { articles } from "@/lib/news-blogs-data"
+
+// 新增：导入WordPress API
+import { getNewsBlogs } from "@/lib/wordpress"
+import type { NewsBlogArticle } from "@/lib/wordpress"
 
 export default function NewsBlogPage() {
+  const [articles, setArticles] = useState<NewsBlogArticle[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedArticle, setSelectedArticle] = useState<NewsBlogArticle | null>(null)
+
   useEffect(() => {
     window.scrollTo(0, 0)
+
+    // 获取文章数据
+    async function fetchArticles() {
+      try {
+        console.log('准备调用 getNewsBlogs...')
+        const result = await getNewsBlogs({ page:1, perPage:12 })
+        console.log('API 调用成功:',result)
+        
+        setArticles(result.data)
+      } catch (err) {
+        
+        console.error('API 调用失败:', err)
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchArticles()
   }, [])
 
-  const [selectedArticle, setSelectedArticle] = useState<(typeof articles)[number] | null>(null)
+  
+  // 错误状态
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopHeader />
+        <StickyNav />
+        <main className="pt-12">
+          <div className="container mx-auto px-4 text-center py-20">
+            <p className="text-lg text-red-500">{error}</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,7 +92,7 @@ export default function NewsBlogPage() {
                   <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center flex-shrink-0" />
                   <div className="text-center">
                     <h3 className="text-white text-3xl font-bold mb-1">News</h3>
-                    <p className="text-white/80 text-sm">Compay updates and news</p>
+                    <p className="text-white/80 text-sm">Company updates and news</p>
                   </div>
                 </div>
               </Link>
@@ -77,8 +118,8 @@ export default function NewsBlogPage() {
                 <div className="w-full lg:w-1/2">
                   <div className="relative w-full overflow-hidden rounded-xl bg-muted aspect-[4/5] lg:aspect-[3/4]">
                     <img
-                      src={selectedArticle.image || "/placeholder.svg"}
-                      alt={selectedArticle.imageAlt || selectedArticle.title}
+                      src={selectedArticle.featured_image || "/placeholder.svg"}
+                      alt={selectedArticle.title}
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -87,22 +128,22 @@ export default function NewsBlogPage() {
                 <div className="w-full space-y-6 lg:w-1/2">
                   <div className="space-y-4">
                     <span className="inline-block bg-primary text-primary-foreground px-4 py-1 text-sm font-medium rounded">
-                      {selectedArticle.category}
+                      {selectedArticle.categories?.[0] || selectedArticle.type}
                     </span>
                     <h2 className="text-4xl font-bold text-balance">{selectedArticle.title}</h2>
                     <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                       <span className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        {new Date(selectedArticle.date).toLocaleDateString("en-US", {
+                        {new Date(selectedArticle.publish_date).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
                         })}
                       </span>
-                      {selectedArticle.author && (
+                      {selectedArticle.author_name && (
                         <span className="flex items-center gap-2">
                           <PenLine className="h-4 w-4" />
-                          {selectedArticle.author}
+                          {selectedArticle.author_name}
                         </span>
                       )}
                     </div>
@@ -131,19 +172,19 @@ export default function NewsBlogPage() {
                 <Card key={item.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
                   <div className="relative h-48 overflow-hidden">
                     <img
-                      src={item.image || "/placeholder.svg"}
-                      alt={item.imageAlt || item.title}
+                      src={item.featured_image || "/placeholder.svg"}
+                      alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1 text-sm font-medium rounded">
-                      {item.category}
+                      {item.categories?.[0] || item.type}
                     </div>
                   </div>
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        {new Date(item.date).toLocaleDateString("en-US", {
+                        {new Date(item.publish_date).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
@@ -171,4 +212,3 @@ export default function NewsBlogPage() {
     </div>
   )
 }
-
