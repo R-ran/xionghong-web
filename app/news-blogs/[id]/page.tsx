@@ -62,9 +62,36 @@ export default function NewsArticlePage({ params }: { params: { id: string } }) 
             </Button>
           </Link>
 
-          <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
-            <div className="w-full lg:w-1/2">
-              <div className="relative w-full overflow-hidden rounded-xl bg-muted aspect-[4/5] lg:aspect-[3/4]">
+          <div className="space-y-8">
+            {/* 文章标题和元信息 */}
+            <div className="space-y-4 text-center">
+              <span className="inline-block bg-primary text-primary-foreground px-4 py-1 text-sm font-medium rounded">
+                {article.categories?.[0] || article.type}
+              </span>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-balance mx-auto max-w-4xl">
+                {article.title}
+              </h1>
+              <div className="flex flex-wrap items-center justify-center gap-4 text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  {new Date(article.publish_date).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+                {article.author_name && (
+                  <span className="flex items-center gap-2">
+                    <PenLine className="h-4 w-4" />
+                    {article.author_name}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* 文章图片 */}
+            <div className="relative w-full max-w-4xl mx-auto">
+              <div className="relative w-full overflow-hidden rounded-xl bg-muted aspect-[16/9] md:aspect-[21/9]">
                 <img
                   src={article.featured_image || "/placeholder.svg"}
                   alt={article.title}
@@ -73,30 +100,8 @@ export default function NewsArticlePage({ params }: { params: { id: string } }) 
               </div>
             </div>
 
-            <div className="w-full space-y-6 lg:w-1/2">
-              <div className="space-y-4">
-                <span className="inline-block bg-primary text-primary-foreground px-4 py-1 text-sm font-medium rounded">
-                  {article.categories?.[0] || article.type}
-                </span>
-                <h1 className="text-4xl md:text-5xl font-bold text-balance">{article.title}</h1>
-                <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-                  <span className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    {new Date(article.publish_date).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                  {article.author_name && (
-                    <span className="flex items-center gap-2">
-                      <PenLine className="h-4 w-4" />
-                      {article.author_name}
-                    </span>
-                  )}
-                </div>
-              </div>
-
+            {/* 文章内容 */}
+            <div className="max-w-4xl mx-auto">
               <div
                 className="prose prose-lg max-w-none"
                 dangerouslySetInnerHTML={{ __html: article.content }}
