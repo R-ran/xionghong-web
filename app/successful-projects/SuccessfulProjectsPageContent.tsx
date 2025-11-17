@@ -60,24 +60,63 @@ export default function SuccessfulProjectsPageContent({
 
   // ============= URL参数处理 =============
   useEffect(() => {
+    const projectParam = searchParams.get("project")
     const categoryParam = searchParams.get("category")
-    const normalized = categoryParam?.toLowerCase()
-    const categoryMap: Record<string, string> = {
-      china: "China Projects",
-      overseas: "Overseas Projects",
-    }
-    if (normalized && categoryMap[normalized]) {
-      setSelectedCategory(categoryMap[normalized])
-      setSelectedProject(null)
-      setTimeout(() => {
-        const navElement = document.querySelector('[data-nav-section]')
-        if (navElement) {
-          navElement.scrollIntoView({ behavior: "smooth", block: "start" })
+
+    // 如果有project参数，显示对应项目
+    if (projectParam) {
+      let decodedSlug = projectParam
+      try {
+        decodedSlug = decodeURIComponent(projectParam)
+      } catch (error) {
+        console.warn('无法解码项目slug:', projectParam)
+      }
+
+      const foundProject = projects.find(p => p.slug === decodedSlug)
+      if (foundProject) {
+        setSelectedProject(foundProject)
+        // 根据项目分类设置选中的分类
+        if (foundProject.categories && foundProject.categories.length > 0) {
+          const categorySlug = foundProject.categories[0]
+          if (categorySlug === 'china-projects') {
+            setSelectedCategory('China Projects')
+          } else if (categorySlug === 'overseas-projects') {
+            setSelectedCategory('Overseas Projects')
+          }
         }
-      }, 100)
+
+        // 滚动到项目详情区域
+        setTimeout(() => {
+          const navElement = document.querySelector('[data-nav-section]')
+          if (navElement) {
+            navElement.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+        }, 300)
+      }
+
+      // 清除URL参数，保持URL干净
       router.replace("/successful-projects", { scroll: false })
     }
-  }, [searchParams, router])
+    // 处理category参数（保留原有逻辑）
+    else if (categoryParam) {
+      const normalized = categoryParam?.toLowerCase()
+      const categoryMap: Record<string, string> = {
+        china: "China Projects",
+        overseas: "Overseas Projects",
+      }
+      if (normalized && categoryMap[normalized]) {
+        setSelectedCategory(categoryMap[normalized])
+        setSelectedProject(null)
+        setTimeout(() => {
+          const navElement = document.querySelector('[data-nav-section]')
+          if (navElement) {
+            navElement.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+        }, 100)
+        router.replace("/successful-projects", { scroll: false })
+      }
+    }
+  }, [searchParams, router, projects])
 
   // ============= 筛选逻辑 =============
   const filteredProjects = selectedCategory
@@ -172,11 +211,11 @@ export default function SuccessfulProjectsPageContent({
           </div>
 
           {/* Project Detail View */}
-          {selectedProject ? (
-            <div className="mb-16">
+          {selectedProject && (
+            <div className="mb-16 p-6 bg-blue-50 rounded-lg border border-blue-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                 {/* Image Section */}
-                <div className="relative w-full h-96 md:h-[500px] overflow-hidden rounded-lg">
+                <div className="relative w-full h-96 md:h-[500px] overflow-hidden rounded-lg shadow-lg">
                   <img
                     src={selectedProject.image || "/placeholder.svg"}
                     alt={selectedProject.title}
@@ -187,8 +226,8 @@ export default function SuccessfulProjectsPageContent({
                 {/* Text Section */}
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">{selectedProject.title}</h2>
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-6">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4 text-blue-800">{selectedProject.title}</h2>
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-6">
                       <span className="flex items-center gap-2">
                         <span className="font-semibold">Location:</span>
                         {selectedProject.location || 'N/A'}
@@ -204,26 +243,36 @@ export default function SuccessfulProjectsPageContent({
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-4">Project Overview</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-gray-800">Project Overview</h3>
                     <div
-                      className="text-lg text-muted-foreground leading-relaxed"
+                      className="text-lg text-gray-700 leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: selectedProject.content }}
                     />
                   </div>
-                  <Button
-                    onClick={() => {setSelectedProject(null);
-                      setSelectedCategory(null);
-                    }}
-                    variant="outline"
-                    className="mt-6"
-                  >
-                    Back to Projects
-                  </Button>
+                  <div className="flex gap-4 pt-4">
+                    <Button
+                      onClick={() => {setSelectedProject(null);
+                        setSelectedCategory(null);
+                      }}
+                      variant="outline"
+                      className="mt-6"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Projects
+                    </Button>
+                    <Link href="/contact">
+                      <Button className="mt-6 bg-blue-600 hover:bg-blue-700">
+                        Contact Us for Similar Projects
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
-          ) : (
-            /* Project Listings */
+          )}
+
+          {/* Project Listings - 只在没有选中项目时显示 */}
+          {!selectedProject && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredProjects.map((project) => (
                 <div

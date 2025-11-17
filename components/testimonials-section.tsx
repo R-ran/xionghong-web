@@ -29,14 +29,8 @@ export function TestimonialsSection({ projects = [] }: TestimonialsSectionProps)
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {displayProjects.length > 0 ? (
             displayProjects.map((project) => {
-              // 构建详情页链接：使用第一个分类，如果没有分类则使用默认值
-              const category = project.categories && project.categories.length > 0
-                ? project.categories[0]
-                : 'china-projects'
-
-              // 确保URL中的slug是URL安全的
-              const safeSlug = encodeURIComponent(project.slug)
-              const detailUrl = `/successful-projects/${category}/${safeSlug}`
+              // 构建跳转到成功案例列表页面的链接，带项目参数
+              const detailUrl = `/successful-projects?project=${encodeURIComponent(project.slug)}`
 
               return (
                 <Link
