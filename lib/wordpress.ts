@@ -107,8 +107,8 @@ async function transformAboutSections(wpPosts: any[], wpApiUrl: string): Promise
       const contentText = post.content?.rendered?.replace(/<[^>]*>/g, '').trim() || ''
       const excerptText = post.excerpt?.rendered?.replace(/<[^>]*>/g, '').trim() || ''
 
-      // 优先使用excerpt，如果没有则从content中截取前150个字符
-      let description = excerptText || contentText.substring(0, 150)
+      // 优先使用ACF description字段，然后使用excerpt，最后从content中截取
+      let description = post.acf?.description || excerptText || contentText.substring(0, 150)
       if (!description && defaultDescriptions[slug]) {
         description = defaultDescriptions[slug]
       }

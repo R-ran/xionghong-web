@@ -41,6 +41,17 @@ export function AboutSection() {
     return () => clearInterval(interval)
   }, [])
 
+  // 添加调试日志来确认使用的数据来源
+  useEffect(() => {
+    if (!loading) {
+      if (aboutSections.length > 0) {
+        console.log('首页使用 WordPress 数据:', aboutSections)
+      } else {
+        console.log('首页使用 fallback 数据，WordPress 数据未加载')
+      }
+    }
+  }, [loading, aboutSections])
+
   // Fallback static data if loading or error（与详情页保持一致）
   const fallbackAboutSections = [
     {
