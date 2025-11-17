@@ -30,12 +30,14 @@ export function TestimonialsSection({ projects = [] }: TestimonialsSectionProps)
           {displayProjects.length > 0 ? (
             displayProjects.map((project) => {
               // 构建详情页链接：使用第一个分类，如果没有分类则使用默认值
-              const category = project.categories && project.categories.length > 0 
-                ? project.categories[0] 
+              const category = project.categories && project.categories.length > 0
+                ? project.categories[0]
                 : 'china-projects'
-              const detailUrl = `/successful-projects/${category}/${project.slug}`
-              
-                
+
+              // 确保URL中的slug是URL安全的
+              const safeSlug = encodeURIComponent(project.slug)
+              const detailUrl = `/successful-projects/${category}/${safeSlug}`
+
               return (
                 <Link
                   key={project.id}

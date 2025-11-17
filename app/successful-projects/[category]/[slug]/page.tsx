@@ -14,8 +14,17 @@ import { notFound, useParams } from "next/navigation"
 
 export default function ProjectDetailPage() {
   const params = useParams()
-  const slug = params?.slug as string
+  let slug = params?.slug as string
   const category = params?.category as string // 虽然不使用，但保留用于路由匹配
+
+  // 解码URL参数中的slug
+  if (slug) {
+    try {
+      slug = decodeURIComponent(slug)
+    } catch (error) {
+      console.warn('无法解码URL中的slug:', slug)
+    }
+  }
   
   // ============= 添加状态管理 =============
   const [project, setProject] = useState<Project | null>(null)

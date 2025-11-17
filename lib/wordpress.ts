@@ -225,41 +225,49 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
     return null
   }
 
-  // 统一直接调用WordPress API
-  const apiUrl = `${wpApiUrl}/wp-json/wp/v2/successful_project?slug=${encodeURIComponent(slug)}&_embed&status=publish&_=${Date.now()}`
+  // 尝试两种方式：原始slug和编码后的slug
+  const slugsToTry = [slug, encodeURIComponent(slug)]
 
-  try {
-    const res = await fetch(apiUrl, {
-      next: { revalidate: 60 },
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Content-Type': 'application/json',
+  for (const slugToTry of slugsToTry) {
+    const apiUrl = `${wpApiUrl}/wp-json/wp/v2/successful_project?slug=${encodeURIComponent(slugToTry)}&_embed&status=publish&_=${Date.now()}`
+
+    try {
+      const res = await fetch(apiUrl, {
+        next: { revalidate: 60 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Content-Type': 'application/json',
+        }
+      })
+
+      if (!res.ok) {
+        console.error(`Project by slug API error: ${res.status} ${res.statusText}`)
+        console.error(`尝试获取的 slug: ${slugToTry}`)
+        console.error(`API URL: ${apiUrl}`)
+        continue // 尝试下一个slug
       }
-    })
 
-    if (!res.ok) {
-      console.error(`Project by slug API error: ${res.status} ${res.statusText}`)
-      console.error(`尝试获取的 slug: ${slug}`)
-      console.error(`API URL: ${apiUrl}`)
-      return null
+      const wpPosts = await res.json()
+
+      if (wpPosts.length === 0) {
+        console.warn(`未找到 slug 为 "${slugToTry}" 的项目`)
+        continue // 尝试下一个slug
+      }
+
+      // 详细调试：单个项目的ACF字段数据
+      console.log(`获取项目详情: ${wpPosts[0].title.rendered}，ACF字段数量: ${wpPosts[0].acf ? Object.keys(wpPosts[0].acf).length : 0}`)
+
+      const projects = await transformProjects(wpPosts, wpApiUrl)
+      return projects[0]
+    } catch (error) {
+      console.error('获取项目详情失败:', error)
+      continue // 尝试下一个slug
     }
-
-    const wpPosts = await res.json()
-
-    if (wpPosts.length === 0) {
-      console.warn(`未找到 slug 为 "${slug}" 的项目`)
-      return null
-    }
-
-    // 详细调试：单个项目的ACF字段数据
-    console.log(`获取项目详情: ${wpPosts[0].title.rendered}，ACF字段数量: ${wpPosts[0].acf ? Object.keys(wpPosts[0].acf).length : 0}`)
-
-    const projects = await transformProjects(wpPosts, wpApiUrl)
-    return projects[0]
-  } catch (error) {
-    console.error('获取项目详情失败:', error)
-    return null
   }
+
+  // 如果所有尝试都失败了
+  console.error(`所有尝试都失败，未找到项目，原slug: ${slug}`)
+  return null
 }
 
 // ✅ 修复：删除重复声明，只保留一个函数
@@ -468,6 +476,15 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
       // 处理 excerpt：移除 HTML 标签并解码 HTML 实体
       const cleanExcerpt = decodeHtmlEntities(post.excerpt?.rendered || '')
 
+      // 解码URL编码的slug，特别是中文slug
+      let decodedSlug = post.slug
+      try {
+        decodedSlug = decodeURIComponent(post.slug)
+      } catch (error) {
+        console.warn(`无法解码slug: ${post.slug}`, error)
+        decodedSlug = post.slug
+      }
+
       return {
         id: post.id.toString(),
         title: post.title.rendered,
@@ -477,7 +494,7 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
         imageAlt: post.title.rendered,
         location: location,
         date: date,
-        slug: post.slug,
+        slug: decodedSlug,
         categories: categories,
       }
     })
