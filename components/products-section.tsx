@@ -4,38 +4,15 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { ChevronDown } from "lucide-react"
 import { Metadata } from "next"
-import { useEffect, useState } from "react"
-import { getProducts } from "@/lib/wordpress"
-import type { Product } from "@/lib/wordpress"
 
 export const metadata: Metadata = {
-  title: "Products",
-  description: "Products",
+  title: "Hot Sales Products",
+  description: "Hot Sales Products",
 }
 
 export function ProductsSection() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const { data: productsData } = await getProducts()
-        console.log('首页获取到的产品数据:', productsData)
-        if (productsData && productsData.length > 0) {
-          setProducts(productsData.slice(0, 4)) // 只显示前4个产品
-        }
-      } catch (error) {
-        console.error('Failed to fetch products:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProducts()
-  }, [])
-
-  // Fallback static data if loading or error
+  // 静态产品数据
   const fallbackProducts = [
     {
       id: "1",
@@ -46,28 +23,30 @@ export function ProductsSection() {
     },
     {
       id: "2",
-      title: "XH hollow grouted anchor bolt",
+      title: "XH grouted anchor bolt",
       featured_image: "/product2.jpg",
-      imageAlt: "XH hollow grouted anchor bolt with grout fittings",
-      slug: "hollow-grouted-bolt",
+      imageAlt: "XH grouted anchor bolt with grout fittings",
+      slug: "grouted-anchor-bolt",
     },
+    
     {
       id: "3",
-      title: "Expansion-shell hollow anchor bolt",
-      featured_image: "/product3.jpg",
-      imageAlt: "Expansion-shell hollow anchor bolt ready for installation",
-      slug: "expansion-shell-bolt",
+      title: "Combination hollow anchor bolt",
+      featured_image: "/product4.jpg",
+      imageAlt: "Combination hollow anchor bolt ready for installation",
+      slug: "combination-hollow-bolt",
     },
     {
       id: "4",
-      title: "Fiberglass anchor bolt",
-      featured_image: "/product4.jpg",
-      imageAlt: "Lightweight fiberglass anchor bolt for corrosion-sensitive projects",
-      slug: "fiberglass-anchor-bolt",
+      title: "Expansion-shell hollow anchor bolt",
+      featured_image: "/product5.jpg",
+      imageAlt: "Expansion-shell hollow anchor bolt ready for installation",
+      slug: "expansion-shell-bolt",
     },
+    
   ]
 
-  const displayProducts = loading || !products || products.length === 0 ? fallbackProducts : products
+  const displayProducts = fallbackProducts
 
   // 根据产品slug或分类确定链接
   const getProductCategoryLink = (product: any) => {
@@ -95,8 +74,8 @@ export function ProductsSection() {
         <div className="mb-8">
           <Link href="/products" className="inline-block group">
             <h2 className="text-5xl font-bold mb-2 group-hover:opacity-80 transition-opacity">
-              <span className="text-foreground">PRO</span>
-              <span className="text-primary">DUCTS</span>
+              <span className="text-foreground">HOTSALES </span>
+              <span className="text-primary"> PRODUCTS</span>
             </h2>
           </Link>
         </div>
@@ -105,8 +84,8 @@ export function ProductsSection() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             {displayProducts.map((product, index) => {
               const isImageTop = index % 2 === 0
-              const productImage = product.featured_image || product.image || "/placeholder.svg"
-              const productName = product.title || product.name || "Product"
+              const productImage = product.featured_image || "/placeholder.svg"
+              const productName = product.title || "Product"
               const productImageAlt = product.imageAlt || productName
 
               return (

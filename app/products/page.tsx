@@ -11,9 +11,6 @@ import { ChevronRight, Phone, Printer, Mail, MapPin } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 
-import { getProducts } from "@/lib/wordpress"
-import type { Product } from "@/lib/wordpress"
-
 // 产品种类数据（保持原有静态分类导航）
 // 注意：使用查询参数格式来过滤产品，而不是跳转到单个产品详情页
 const productCategories = [
@@ -23,9 +20,19 @@ const productCategories = [
     href: "/products?category=self-drilling",
   },
   {
-    id: "hollow-grouted",
-    name: "XH hollow grouted anchor bolt",
-    href: "/products?category=hollow-grouted",
+    id: "grouted-anchor-bolt",
+    name: "XH grouted anchor bolt",
+    href: "/products?category=grouted-anchor-bolt",
+  },
+  {
+    id: "common-anchor-bolt",
+    name: "XH common anchor bolt",
+    href: "/products?category=common-anchor-bolt",
+  },
+  {
+    id: "combination-hollow",
+    name: "Combination hollow anchor bolt",
+    href: "/products?category=combination-hollow",
   },
   {
     id: "expansion-shell",
@@ -37,11 +44,6 @@ const productCategories = [
     name: "Fiberglass anchor bolt",
     href: "/products?category=fiberglass",
   },
-  {
-    id: "accessories",
-    name: "Accessories",
-    href: "/products?category=accessories",
-  },
 ]
 
 type ProductItem = {
@@ -51,6 +53,91 @@ type ProductItem = {
   image: string
   imageAlt: string
   slug: string
+}
+
+// 默认产品数据（移到组件外部，确保修改后能正确更新）
+const getDefaultProducts = (): ProductItem[] => [
+  {
+    id: "self-drilling-1",
+    name: "XH Self-Drilling Anchor Bolt",
+    description: "High-efficiency self-drilling anchor bolt system for rock and soil reinforcement. Suitable for various geological conditions.",
+    image: "/product1.jpg",
+    imageAlt: "XH Self-Drilling Anchor Bolt",
+    slug: "self-drilling-bolt",
+  },
+  {
+    id: "hollow-grouted-1",
+    name: "XH Grouted Anchor Bolt",
+    description: "Advanced grouted anchor system with superior corrosion resistance and high load-bearing capacity.",
+    image: "/product2.jpg",
+    imageAlt: "XH Grouted Anchor Bolt",
+    slug: "grouted-anchor-bolt",
+  },
+  {
+    id: "expansion-shell-1",
+    name: "XH Common Anchor Bolt",
+    description: "Advanced common anchor system with superior corrosion resistance and high load-bearing capacity.",
+    image: "/product3.jpg",
+    imageAlt: "XH Common Anchor Bolt",
+    slug: "common-anchor-bolt",
+  },
+  {
+    id: "combination-hollow-1",
+    name: "Combination Hollow Anchor Bolt",
+    description: "Advanced combination anchor system with superior corrosion resistance and high load-bearing capacity.",
+    image: "/product4.jpg",
+    imageAlt: "Combination Hollow Anchor Bolt",
+    slug: "combination-hollow-bolt",
+  },
+  {
+    id: "accessories-1",
+    name: "Expansion-Shell Hollow Anchor Bolt",
+    description: "Reliable expansion-shell anchor system for immediate support in tunneling and mining applications.",
+    image: "/product5.jpg",
+    imageAlt: "Expansion-Shell Hollow Anchor Bolt",
+    slug: "expansion-shell-bolt",
+  },
+  {
+    id: "fiberglass-1",
+    name: "Fiberglass Anchor Bolt",
+    description: "Non-metallic fiberglass anchor system with excellent corrosion resistance for permanent applications.",
+    image: "/product6.jpg",
+    imageAlt: "Fiberglass Anchor Bolt",
+    slug: "fiberglass-bolt",
+  },
+]
+
+// 根据分类过滤产品（移到组件外部）
+const getFilteredProducts = (cat: string | null): ProductItem[] => {
+  const allProducts = getDefaultProducts()
+  
+  if (!cat) {
+    return allProducts
+  }
+  
+  // 根据分类过滤产品
+  const categoryLower = cat.toLowerCase().trim()
+  return allProducts.filter((product) => {
+    const productSlug = product.slug.toLowerCase()
+    const productName = product.name.toLowerCase()
+    
+    // 匹配分类
+    if (categoryLower === 'self-drilling') {
+      return productSlug.includes('self-drilling') || productName.includes('self-drilling')
+    } else if (categoryLower === 'grouted-anchor-bolt') {
+      return productSlug.includes('grouted-anchor-bolt') || productName.includes('grouted')
+    } else if (categoryLower === 'common-anchor-bolt') {
+      return productSlug.includes('common-anchor-bolt') || productName.includes('common')
+    } else if (categoryLower === 'combination-hollow') {
+      return productSlug.includes('combination-hollow') || productName.includes('combination')
+    } else if (categoryLower === 'expansion-shell') {
+      return productSlug.includes('expansion-shell') || productName.includes('expansion-shell')
+    } else if (categoryLower === 'fiberglass') {
+      return productSlug.includes('fiberglass') || productName.includes('fiberglass')
+    }
+    
+    return false
+  })
 }
 
 export default function ProductsPage() {
@@ -81,168 +168,12 @@ function ProductsPageContent() {
     window.scrollTo(0, 0)
   }, [])
 
-  // 默认产品数据（当 WordPress 无数据时使用）
-  const getDefaultProducts = (): ProductItem[] => [
-    {
-      id: "self-drilling-1",
-      name: "XH Self-Drilling Anchor Bolt",
-      description: "High-efficiency self-drilling anchor bolt system for rock and soil reinforcement. Suitable for various geological conditions.",
-      image: "/product1.jpg",
-      imageAlt: "XH Self-Drilling Anchor Bolt",
-      slug: "self-drilling-bolt",
-    },
-    {
-      id: "hollow-grouted-1",
-      name: "XH Hollow Grouted Anchor Bolt",
-      description: "Advanced hollow grouted anchor system with superior corrosion resistance and high load-bearing capacity.",
-      image: "/product2.jpg",
-      imageAlt: "XH Hollow Grouted Anchor Bolt",
-      slug: "hollow-grouted-bolt",
-    },
-    {
-      id: "expansion-shell-1",
-      name: "Expansion-Shell Hollow Anchor Bolt",
-      description: "Reliable expansion-shell anchor system for immediate support in tunneling and mining applications.",
-      image: "/product3.jpg",
-      imageAlt: "Expansion-Shell Hollow Anchor Bolt",
-      slug: "expansion-shell-bolt",
-    },
-    {
-      id: "fiberglass-1",
-      name: "Fiberglass Anchor Bolt",
-      description: "Non-metallic fiberglass anchor system with excellent corrosion resistance for permanent applications.",
-      image: "/product4.jpg",
-      imageAlt: "Fiberglass Anchor Bolt",
-      slug: "fiberglass-bolt",
-    },
-    {
-      id: "accessories-1",
-      name: "Anchor Bolt Accessories",
-      description: "Complete range of accessories including plates, nuts, couplers, and drilling tools for anchor bolt systems.",
-      image: "/product5.jpg",
-      imageAlt: "Anchor Bolt Accessories",
-      slug: "accessories",
-    },
-    {
-      id: "self-drilling-2",
-      name: "Heavy-Duty Self-Drilling Bolt",
-      description: "Extra-heavy-duty self-drilling anchor bolt for extreme ground conditions and high-load applications.",
-      image: "/product6.jpg",
-      imageAlt: "Heavy-Duty Self-Drilling Bolt",
-      slug: "heavy-duty-self-drilling",
-    },
-  ]
+  const [products, setProducts] = useState<ProductItem[]>(() => getFilteredProducts(category))
+  const loading = false
 
-  const [products, setProducts] = useState<ProductItem[]>(() => getDefaultProducts())
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // 从 WordPress 获取产品数据
+  // 当分类变化时更新产品列表
   useEffect(() => {
-    async function fetchProducts() {
-      setLoading(true)
-      setError(null)
-      try {
-        // 注意：不传递 category 参数给 API，因为 WordPress REST API 
-        // 可能不支持自定义文章类型的分类过滤，会在客户端进行过滤
-        const { data: remoteProducts } = await getProducts({ 
-          page: 1, 
-          perPage: 100  // 增加每页数量以确保获取所有产品
-        })
-
-        console.log('✅ 成功获取产品数据:', remoteProducts.length, '个产品')
-        console.log('📋 当前分类参数:', category || '无（显示所有产品）')
-        
-        // 如果有远程数据，使用远程数据
-        if (remoteProducts && remoteProducts.length > 0) {
-          // 收集所有产品的分类信息用于调试
-          const allCategories = new Set<string>()
-          remoteProducts.forEach((p: Product) => {
-            p.categories.forEach(cat => allCategories.add(cat))
-          })
-          console.log('📂 WordPress 中所有产品分类:', Array.from(allCategories))
-          console.log('📦 产品分类详情:', remoteProducts.map((p: Product) => ({ 
-            title: p.title, 
-            categories: p.categories 
-          })))
-
-          // 在客户端进行过滤
-          let filteredProducts = remoteProducts
-          
-          if (category) {
-            const categoryLower = category.toLowerCase().trim()
-            console.log(`🔍 过滤分类 "${category}"...`)
-            
-            // 尝试多种匹配方式
-            filteredProducts = remoteProducts.filter((product: Product) => {
-              // 检查产品分类数组中是否包含当前分类
-              return product.categories.some((cat: string) => {
-                const catLower = cat.toLowerCase().trim()
-                
-                // 1. 精确匹配
-                if (catLower === categoryLower) {
-                  return true
-                }
-                
-                // 2. 包含匹配（category 包含在产品分类中，或产品分类包含 category）
-                if (catLower.includes(categoryLower) || categoryLower.includes(catLower)) {
-                  return true
-                }
-                
-                // 3. 部分匹配（例如 "self-drilling" 匹配 "self-drilling-bolt"）
-                const categoryParts = categoryLower.split('-')
-                const catParts = catLower.split('-')
-                if (categoryParts.some(part => catParts.includes(part)) || 
-                    catParts.some(part => categoryParts.includes(part))) {
-                  return true
-                }
-                
-                return false
-              })
-            })
-            
-            console.log(`✅ 分类 "${category}" 过滤完成: 找到 ${filteredProducts.length} 个产品`)
-            
-            if (filteredProducts.length === 0) {
-              console.warn(`⚠️ 没有找到分类 "${category}" 的产品`)
-              console.log(`💡 提示: 请检查 WordPress 中的产品分类 slug 是否与 URL 参数匹配`)
-              console.log(`💡 当前可用分类:`, Array.from(allCategories))
-            }
-          }
-
-          // 如果分类过滤后没有产品，显示所有产品（但记录警告）
-          if (filteredProducts.length === 0 && category) {
-            console.warn(`没有找到分类 "${category}" 的产品，显示所有产品`)
-            // 不设置错误，而是显示所有产品
-            filteredProducts = remoteProducts
-          }
-
-          const transformed = filteredProducts.map((product: Product) => ({
-            id: product.id,
-            name: product.title,
-            description: product.excerpt.replace(/<[^>]*>/g, '').substring(0, 120) + '...',
-            image: product.featured_image || "/placeholder.svg",
-            imageAlt: product.title,
-            slug: product.slug,
-          }))
-          
-          setProducts(transformed)
-        } else {
-          // 如果没有远程数据，使用默认数据
-          console.log('没有远程产品数据，使用默认数据')
-          setProducts(getDefaultProducts())
-        }
-      } catch (err) {
-        console.error('Failed to fetch from WordPress, using fallback data:', err)
-        setError(`Failed to load products: ${err instanceof Error ? err.message : 'Unknown error'}`)
-        // 出错时使用默认产品数据
-        setProducts(getDefaultProducts())
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProducts()
+    setProducts(getFilteredProducts(category))
   }, [category])
 
   // 加载状态
@@ -410,7 +341,7 @@ function ProductsPageContent() {
                       {productCategories.find(cat => cat.id === category)?.name || 'Products'}
                     </h1>
                     <p className="text-muted-foreground text-sm">
-                      {productCategories.find(cat => cat.id === category)?.description || 'Products in this category'}
+                      Products in this category
                     </p>
                   </>
                 ) : (

@@ -43,12 +43,18 @@ export async function getAboutSections(): Promise<AboutSection[]> {
   }
 
   try {
+    // 添加时间戳参数避免浏览器和服务器缓存
+    const timestamp = Date.now()
     const res = await fetch(
-      `${wpApiUrl}/wp-json/wp/v2/about_section?per_page=100&_embed&status=publish`,
+      `${wpApiUrl}/wp-json/wp/v2/about_section?per_page=100&_embed&status=publish&_=${timestamp}`,
       {
-        next: { revalidate: 3600 }, // 缓存1小时，允许静态生成
+        // 移除缓存，确保 WordPress 更新能及时显示
+        cache: 'no-store', // 不缓存，每次都获取最新数据
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       }
     )

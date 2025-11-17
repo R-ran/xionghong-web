@@ -1,4 +1,5 @@
-export const dynamic = 'force-static'
+// 改为动态渲染，确保 WordPress 更新能及时显示
+export const dynamic = 'force-dynamic'
 
 import { Metadata } from "next"
 import AboutPageClient from "./about-page-content"
@@ -12,9 +13,8 @@ export const metadata: Metadata = {
   description: "Learn more about our company, team, and state-of-the-art manufacturing facilities.",
 }
 
-// 允许静态生成
-
-export const revalidate = 3600 // 1小时重新验证
+// 改为动态渲染，不再使用静态缓存
+// export const revalidate = 3600 // 1小时重新验证
 
 export default async function AboutPage() {
   let sections: AboutSection[] = []

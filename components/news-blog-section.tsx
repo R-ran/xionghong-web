@@ -3,60 +3,32 @@
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { useEffect, useState } from "react"
+// 注释掉不再需要的导入
+// import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import { getNewsBlogs, truncateExcerpt } from "@/lib/wordpress"
-import type { NewsBlogArticle } from "@/lib/wordpress"
+// 从共享数据文件导入
+import { getLatestNews } from "@/lib/news-blog-data"
+
+// 辅助函数：截断文本
+function truncateExcerpt(text: string, maxLength: number): string {
+  if (!text) return ''
+  const cleaned = text.replace(/<[^>]*>/g, '')
+  if (cleaned.length <= maxLength) return cleaned
+  return cleaned.substring(0, maxLength) + '...'
+}
 
 export function NewsBlogSection() {
-  const [newsArticles, setNewsArticles] = useState<NewsBlogArticle[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchNews() {
-      try {
-        const { data: articles } = await getNewsBlogs({ page: 1, perPage: 3, type: 'news' })
-        setNewsArticles(articles)
-      } catch (error) {
-        console.error('Failed to fetch news:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchNews()
-  }, [])
-
-  // Fallback static data if loading or error
-  const fallbackNews = [
-    {
-      id: "1",
-      title: "New Generation Rock Bolt Technology Launched",
-      excerpt: "We are excited to announce the launch of our latest rock bolt technology, featuring enhanced corrosion resistance and improved load capacity.",
-      date: "2024-03-15",
-      featured_image: "/placeholder.svg",
-      slug: "new-generation-rock-bolt"
-    },
-    {
-      id: "2",
-      title: "SINOROCK Participates in International Mining Conference",
-      excerpt: "Our team showcased innovative anchoring solutions at the 2024 International Mining and Tunneling Conference.",
-      date: "2024-03-10",
-      featured_image: "/placeholder.svg",
-      slug: "mining-conference"
-    },
-    {
-      id: "3",
-      title: "Case Study: Successful Tunnel Project in Europe",
-      excerpt: "Learn how our T Thread self-drilling anchor bolts contributed to the successful completion of a major tunnel project.",
-      date: "2024-03-05",
-      featured_image: "/placeholder.svg",
-      slug: "tunnel-project-europe"
-    }
-  ]
-
-  const displayNews = loading || !newsArticles || newsArticles.length === 0 ? fallbackNews : newsArticles
+  // 从共享数据文件获取最新的3条新闻
+  const displayNews = getLatestNews(3).map(article => ({
+    id: article.id,
+    title: article.title,
+    excerpt: article.excerpt,
+    date: article.publish_date,
+    featured_image: article.featured_image,
+    slug: article.id, // 使用 id 作为 slug
+    publish_date: article.publish_date // 添加 publish_date 以兼容现有代码
+  }))
   return (
     <section id="news-blogs" className="py-10 bg-muted/30">
       <div className="container mx-auto px-4">

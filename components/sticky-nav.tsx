@@ -18,10 +18,11 @@ const categories = [
     href: "/products",
     dropdown: [
       { label: "XH self-drilling anchor bolt", href: "/products?category=self-drilling" },
-      { label: "XH hollow grouted anchor bolt", href: "/products?category=hollow-grouted" },
+      { label: "XH grouted anchor bolt", href: "/products?category=grouted-anchor-bolt" },
+      { label: "XH common anchor bolt", href: "/products?category=common-anchor-bolt" },
+      { label: "Combination hollow anchor bolt", href: "/products?category=combination-hollow" },
       { label: "Expansion-shell hollow anchor bolt", href: "/products?category=expansion-shell" },
       { label: "Fiberglass anchor bolt", href: "/products?category=fiberglass" },
-      { label:"Accessories",href:"/products?category=accessories"},
     ],
   },
   {

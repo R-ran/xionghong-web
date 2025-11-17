@@ -9,17 +9,33 @@ import { StickyNav } from "@/components/sticky-nav"
 import { Footer } from "@/components/footer"
 import { X, Download, Mail, Phone, Printer, MapPin, MessageSquare, Send } from "lucide-react"
 import { useState, useEffect } from "react"
-import { getProductBySlug } from "@/lib/wordpress"
-import type { Product } from "@/lib/wordpress"
 
 // 产品列表（保持静态）
 const productCategories = [
   { name: "XH self-drilling anchor bolt", slug: "self-drilling-bolt" },
-  { name: "XH hollow grouted anchor bolt", slug: "hollow-grouted-bolt" },
+  { name: "XH grouted anchor bolt", slug: "grouted-anchor-bolt" },
+  { name: "XH common anchor bolt", slug: "common-anchor-bolt" },
+  { name: "Combination hollow anchor bolt", slug: "combination-hollow-bolt" },
   { name: "Expansion-shell hollow anchor bolt", slug: "expansion-shell-bolt" },
   { name: "Fiberglass anchor bolt", slug: "fiberglass-bolt" },
-  { name: "Accessories", slug: "accessories" },
 ]
+
+// 产品数据类型定义
+type Product = {
+  id: string
+  title: string
+  slug: string
+  content: string
+  excerpt: string
+  featured_image: string
+  model: string
+  specs: string
+  tech_params: string
+  application_areas: string
+  features: Array<{ feature: string }>
+  case_images: Array<any>
+  categories: string[]
+}
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const [slug, setSlug] = useState<string>("")
@@ -38,23 +54,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   useEffect(() => {
     if (!slug) return // 等待 slug 被设置
-
-    async function loadProduct() {
-      try {
-        const data = await getProductBySlug(slug)
-        if (data) {
-          setProduct(data)
-        } else {
-          // 如果没有找到产品，设置默认产品数据
-          setProduct(getDefaultProductData(slug))
-        }
-      } catch (error) {
-        console.error("Failed to load product from WordPress, using fallback:", error)
-        // 出错时使用默认产品数据
-        setProduct(getDefaultProductData(slug))
-      }
-    }
-    loadProduct()
+    // 直接使用默认产品数据
+    setProduct(getDefaultProductData(slug))
   }, [slug])
 
   // 根据slug获取默认产品数据
@@ -66,7 +67,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         slug: "self-drilling-bolt",
         content: "<p>The XH Self-Drilling Anchor Bolt is a revolutionary anchoring system that combines drilling and anchoring in one operation. This innovative design significantly reduces installation time and costs while providing superior holding capacity in various ground conditions.</p><p>Key features include hollow steel body for simultaneous drilling and grouting, hardened drill bit for efficient penetration, and reliable thread connection for assured load transfer.</p>",
         excerpt: "High-efficiency self-drilling anchor bolt system for rock and soil reinforcement. Suitable for various geological conditions.",
-        featured_image: "/placeholder.svg",
+        featured_image: "/product1.jpg",
         model: "XH-25, XH-32, XH-40",
         specs: "Diameter: 25-40mm, Length: 1.0-6.0m, Tensile Strength: ≥600MPa",
         tech_params: "Drilling Speed: 0.5-1.0m/min, Grouting Pressure: 1.5-3.0MPa",
@@ -80,13 +81,13 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         case_images: [],
         categories: ["self-drilling"]
       },
-      "hollow-grouted-bolt": {
+      "grouted-anchor-bolt": {
         id: "hollow-grouted-1",
-        title: "XH Hollow Grouted Anchor Bolt",
-        slug: "hollow-grouted-bolt",
-        content: "<p>The XH Hollow Grouted Anchor Bolt features a hollow design that allows for efficient grouting during installation. This system provides excellent load-bearing capacity and long-term durability in challenging ground conditions.</p>",
-        excerpt: "Advanced hollow grouted anchor system with superior corrosion resistance and high load-bearing capacity.",
-        featured_image: "/placeholder.svg",
+        title: "XH Grouted Anchor Bolt",
+        slug: "grouted-anchor-bolt",
+        content: "<p>The XH Grouted Anchor Bolt features a grouted design that allows for efficient grouting during installation. This system provides excellent load-bearing capacity and long-term durability in challenging ground conditions.</p>",
+        excerpt: "Advanced grouted anchor system with superior corrosion resistance and high load-bearing capacity.",
+        featured_image: "/product2.jpg",
         model: "XH-G-25, XH-G-32, XH-G-40",
         specs: "Diameter: 25-40mm, Length: 1.0-6.0m, Hollow Diameter: 15-25mm",
         tech_params: "Grouting Pressure: 1.5-3.0MPa, Bond Strength: ≥15MPa",
@@ -100,13 +101,53 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         case_images: [],
         categories: ["hollow-grouted"]
       },
+      "common-anchor-bolt": {
+        id: "common-anchor-1",
+        title: "XH Common Anchor Bolt",
+        slug: "common-anchor-bolt",
+        content: "<p>The XH Common Anchor Bolt features a common design that allows for efficient installation. This system provides excellent load-bearing capacity and long-term durability in challenging ground conditions.</p>",
+        excerpt: "Advanced common anchor system with superior corrosion resistance and high load-bearing capacity.",
+        featured_image: "/product3.jpg",
+        model: "XH-C-25, XH-C-32, XH-C-40",
+        specs: "Diameter: 25-40mm, Length: 1.0-6.0m, Common Diameter: 15-25mm",
+        tech_params: "Common Pressure: 1.5-3.0MPa, Bond Strength: ≥15MPa",
+        application_areas: "Underground Works, Slope Protection, Rock Reinforcement",
+        features: [
+          { feature: "Efficient installation through common body" },
+          { feature: "Superior corrosion resistance" },
+          { feature: "High load-bearing capacity" },
+          { feature: "Long-term durability" }
+        ],
+        case_images: [],
+        categories: ["common-anchor"]
+      },
+      "combination-hollow-bolt": {
+        id: "combination-hollow-1",
+        title: "Combination Hollow Anchor Bolt",
+        slug: "combination-hollow-bolt",
+        content: "<p>The Combination Hollow Anchor Bolt features a combination design that allows for efficient installation. This system provides excellent load-bearing capacity and long-term durability in challenging ground conditions.</p>",
+        excerpt: "Advanced combination anchor system with superior corrosion resistance and high load-bearing capacity.",
+        featured_image: "/product4.jpg",
+        model: "XH-C-25, XH-C-32, XH-C-40",
+        specs: "Diameter: 25-40mm, Length: 1.0-6.0m, Common Diameter: 15-25mm",
+        tech_params: "Common Pressure: 1.5-3.0MPa, Bond Strength: ≥15MPa",
+        application_areas: "Underground Works, Slope Protection, Rock Reinforcement",
+        features: [
+          { feature: "Efficient installation through combination body" },
+          { feature: "Superior corrosion resistance" },
+          { feature: "High load-bearing capacity" },
+          { feature: "Long-term durability" }
+        ],
+        case_images: [],
+        categories: ["combination-hollow"]
+      },
       "expansion-shell-bolt": {
         id: "expansion-shell-1",
         title: "Expansion-Shell Hollow Anchor Bolt",
         slug: "expansion-shell-bolt",
         content: "<p>The Expansion-Shell Hollow Anchor Bolt provides immediate support upon installation through mechanical expansion. This system is ideal for applications requiring instant load-bearing capacity.</p>",
         excerpt: "Reliable expansion-shell anchor system for immediate support in tunneling and mining applications.",
-        featured_image: "/placeholder.svg",
+        featured_image: "/product5.jpg",
         model: "ES-25, ES-32, ES-40",
         specs: "Shell Diameter: 45-65mm, Bolt Diameter: 25-40mm",
         tech_params: "Expansion Force: 200-500kN, Installation Torque: 150-300Nm",
@@ -126,7 +167,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         slug: "fiberglass-bolt",
         content: "<p>The Fiberglass Anchor Bolt offers excellent corrosion resistance and electrical insulation properties. Made from high-strength composite materials, it's ideal for permanent applications and special environments.</p>",
         excerpt: "Non-metallic fiberglass anchor system with excellent corrosion resistance for permanent applications.",
-        featured_image: "/placeholder.svg",
+        featured_image: "/product6.jpg",
         model: "FG-22, FG-25, FG-32",
         specs: "Diameter: 22-32mm, Length: 1.0-6.0m, Tensile Strength: ≥800MPa",
         tech_params: "Elastic Modulus: 40-50GPa, Density: 1.9-2.1g/cm³",
@@ -139,26 +180,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         ],
         case_images: [],
         categories: ["fiberglass"]
-      },
-      "accessories": {
-        id: "accessories-1",
-        title: "Anchor Bolt Accessories",
-        slug: "accessories",
-        content: "<p>Complete range of accessories designed to complement our anchor bolt systems. All accessories are manufactured to the highest quality standards to ensure system compatibility and performance.</p>",
-        excerpt: "Complete range of accessories including plates, nuts, couplers, and drilling tools for anchor bolt systems.",
-        featured_image: "/placeholder.svg",
-        model: "Various Models Available",
-        specs: "Standard: ASTM, GB, DIN Custom sizes available",
-        tech_params: "Material: Steel 45#, Stainless Steel Available",
-        application_areas: "All Anchor Bolt Applications",
-        features: [
-          { feature: "Complete range of accessories" },
-          { feature: "High quality manufacturing" },
-          { feature: "System compatibility" },
-          { feature: "Custom sizes available" }
-        ],
-        case_images: [],
-        categories: ["accessories"]
       }
     }
 

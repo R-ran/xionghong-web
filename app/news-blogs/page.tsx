@@ -9,54 +9,64 @@ import { StickyNav } from "@/components/sticky-nav"
 import { Footer } from "@/components/footer"
 import { useEffect, useState } from "react"
 
-// 新增：导入WordPress API
-import { getNewsBlogs } from "@/lib/wordpress"
-import type { NewsBlogArticle } from "@/lib/wordpress"
+// 注释掉 WordPress API 导入
+// import { getNewsBlogs } from "@/lib/wordpress"
+// import type { NewsBlogArticle } from "@/lib/wordpress"
+
+// 从共享数据文件导入
+import { staticArticles, type StaticArticle } from "@/lib/news-blog-data"
 
 export default function NewsBlogPage() {
-  const [articles, setArticles] = useState<NewsBlogArticle[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedArticle, setSelectedArticle] = useState<NewsBlogArticle | null>(null)
+  // 注释掉 WordPress 状态管理
+  // const [articles, setArticles] = useState<NewsBlogArticle[]>([])
+  // const [loading, setLoading] = useState(false)
+  // const [error, setError] = useState<string | null>(null)
+  const [selectedArticle, setSelectedArticle] = useState<StaticArticle | null>(null)
+  const articles = staticArticles
 
   useEffect(() => {
     window.scrollTo(0, 0)
-
-    // 获取文章数据
-    async function fetchArticles() {
-      try {
-        console.log('准备调用 getNewsBlogs...')
-        const result = await getNewsBlogs({ page:1, perPage:12 })
-        console.log('API 调用成功:',result)
-        
-        setArticles(result.data)
-      } catch (err) {
-        
-        console.error('API 调用失败:', err)
-        setError(err instanceof Error ? err.message : 'Unknown error')
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchArticles()
   }, [])
 
-  
-  // 错误状态
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <TopHeader />
-        <StickyNav />
-        <main className="pt-12">
-          <div className="container mx-auto px-4 text-center py-20">
-            <p className="text-lg text-red-500">{error}</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
-  }
+  // 注释掉 WordPress 数据获取
+  // useEffect(() => {
+  //   window.scrollTo(0, 0)
+  //
+  //   // 获取文章数据
+  //   async function fetchArticles() {
+  //     try {
+  //       console.log('准备调用 getNewsBlogs...')
+  //       const result = await getNewsBlogs({ page:1, perPage:12 })
+  //       console.log('API 调用成功:',result)
+  //       
+  //       setArticles(result.data)
+  //     } catch (err) {
+  //       
+  //       console.error('API 调用失败:', err)
+  //       setError(err instanceof Error ? err.message : 'Unknown error')
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
+  //   fetchArticles()
+  // }, [])
+
+  // 注释掉错误状态处理
+  // // 错误状态
+  // if (error) {
+  //   return (
+  //     <div className="min-h-screen bg-background">
+  //       <TopHeader />
+  //       <StickyNav />
+  //       <main className="pt-12">
+  //         <div className="container mx-auto px-4 text-center py-20">
+  //           <p className="text-lg text-red-500">{error}</p>
+  //         </div>
+  //       </main>
+  //       <Footer />
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="min-h-screen bg-background">

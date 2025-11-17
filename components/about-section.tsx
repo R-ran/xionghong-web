@@ -24,7 +24,9 @@ export function AboutSection() {
   useEffect(() => {
     async function fetchAboutSections() {
       try {
+        // 添加时间戳参数避免缓存
         const sections = await getAboutSections()
+        console.log('首页获取到的 About Sections:', sections)
         setAboutSections(sections)
       } catch (error) {
         console.error('Failed to fetch about sections:', error)
@@ -34,9 +36,12 @@ export function AboutSection() {
     }
 
     fetchAboutSections()
+    // 每30秒重新获取一次，确保 WordPress 更新能及时显示
+    const interval = setInterval(fetchAboutSections, 30000)
+    return () => clearInterval(interval)
   }, [])
 
-  // Fallback static data if loading or error
+  // Fallback static data if loading or error（与详情页保持一致）
   const fallbackAboutSections = [
     {
       id: "why-choose-us",
@@ -44,11 +49,11 @@ export function AboutSection() {
       subtitle: "Why choose us",
       description:
         "Discover what sets us apart in the geotechnical anchoring industry with our commitment to quality and innovation.",
-      detailedDescription: "",
+      detailedDescription: "SINOROCK stands out as a leading provider of geotechnical anchoring solutions through our unwavering commitment to quality, innovation, and customer satisfaction. With years of expertise in the industry, we have established ourselves as a trusted partner for projects worldwide. Our comprehensive product range, cutting-edge technology, and dedicated support team ensure that every project receives the highest level of service and attention to detail.",
       icon: "Award" as const,
       image: "/why.jpg",
       imageAlt: "Engineering team collaborating on SINOROCK geotechnical solutions",
-      href: "/about/why-choose-us",
+      href: "/about?section=why-choose-us",
       order: 0,
     },
     {
@@ -57,11 +62,11 @@ export function AboutSection() {
       subtitle: "Factory Overview",
       description:
         "Explore our state-of-the-art manufacturing facilities equipped with advanced technology and quality control systems.",
-      detailedDescription: "",
+      detailedDescription: "Our state-of-the-art manufacturing facilities represent the pinnacle of modern production capabilities. Spanning over extensive grounds, our factories are equipped with advanced machinery and cutting-edge technology that enable us to produce high-quality anchor bolts and geotechnical solutions at scale. We maintain strict quality control systems throughout the production process, ensuring that every product meets international standards. Our facilities feature automated production lines, precision testing equipment, and dedicated quality assurance teams that work together to deliver excellence in every product we manufacture.",
       icon: "Factory" as const,
       image: "/industrial-factory-production-floor.jpg",
       imageAlt: "Interior of SINOROCK's advanced anchor bolt manufacturing facility",
-      href: "/about/factory-overview",
+      href: "/about/factory",
       order: 1,
     },
     {
@@ -70,7 +75,7 @@ export function AboutSection() {
       subtitle: "History",
       description:
         "Learn about our journey from inception to becoming a leading provider of geotechnical anchoring solutions.",
-      detailedDescription: "",
+      detailedDescription: "Since our founding, SINOROCK has been on a remarkable journey of growth and innovation. Starting as a small operation with a vision to revolutionize geotechnical anchoring, we have steadily expanded our capabilities and market presence. Over the years, we have invested heavily in research and development, manufacturing infrastructure, and talent acquisition. Today, we are proud to be recognized as a leading provider of geotechnical anchoring solutions, serving clients across multiple continents and industries. Our history is a testament to our commitment to excellence and our dedication to meeting the evolving needs of the construction and mining sectors.",
       icon: "History" as const,
       image: "/history.jpg",
       imageAlt: "Historical display of SINOROCK project milestones",
@@ -83,7 +88,7 @@ export function AboutSection() {
       subtitle: "Certificate",
       description:
         "View our certifications and quality standards that demonstrate our commitment to excellence and safety.",
-      detailedDescription: "",
+      detailedDescription: "Quality and safety are at the core of everything we do at SINOROCK. We have obtained numerous international certifications and quality standards that validate our commitment to excellence. Our certifications include ISO 9001:2015 for quality management systems, demonstrating our systematic approach to maintaining the highest standards in all our operations. These certifications are not just badges of honor—they represent our ongoing dedication to continuous improvement, rigorous quality control, and adherence to international best practices. We regularly undergo audits and assessments to ensure we maintain these standards and continue to exceed industry expectations.",
       icon: "Award" as const,
       image: "/certificate.jpg",
       imageAlt: "Certificates highlighting SINOROCK quality and safety achievements",

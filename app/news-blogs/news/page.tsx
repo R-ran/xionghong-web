@@ -10,8 +10,20 @@ import { StickyNav } from "@/components/sticky-nav"
 import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { getNewsBlogs, truncateExcerpt } from "@/lib/wordpress"
-import type { NewsBlogArticle } from "@/lib/wordpress"
+// 注释掉 WordPress 导入
+// import { getNewsBlogs, truncateExcerpt } from "@/lib/wordpress"
+// import type { NewsBlogArticle } from "@/lib/wordpress"
+
+// 从共享数据文件导入
+import { getNewsArticles } from "@/lib/news-blog-data"
+
+// 辅助函数：截断文本
+function truncateExcerpt(text: string, maxLength: number): string {
+  if (!text) return ''
+  const cleaned = text.replace(/<[^>]*>/g, '')
+  if (cleaned.length <= maxLength) return cleaned
+  return cleaned.substring(0, maxLength) + '...'
+}
 
 type NewsItem = {
   id: string | number
@@ -36,7 +48,8 @@ export default function NewsPage() {
 function NewsPageContent() {
   const [newsArticles, setNewsArticles] = useState<NewsItem[]>([])
   const [selectedArticle, setSelectedArticle] = useState<NewsItem | null>(null)
-  const [loading, setLoading] = useState(false)
+  // 注释掉 loading 状态（不再需要）
+  // const [loading, setLoading] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -44,45 +57,64 @@ function NewsPageContent() {
     window.scrollTo(0, 0)
   }, [])
 
-  // 从 WordPress 获取 News 类型文章
+  // 从共享数据文件获取新闻数据
+  const staticNews: NewsItem[] = getNewsArticles().map(article => ({
+    id: article.id,
+    slug: article.id, // 使用 id 作为 slug
+    title: article.title,
+    date: article.publish_date,
+    excerpt: article.excerpt,
+    image: article.featured_image,
+    author: article.author_name,
+    content: article.content,
+    category: article.categories?.[0] || 'News'
+  }))
+
+  // 注释掉 WordPress 数据获取
+  // // 从 WordPress 获取 News 类型文章
+  // useEffect(() => {
+  //   let mounted = true
+  //
+  //   const fetchNews = async () => {
+  //     try {
+  //       const { data: remotePosts } = await getNewsBlogs({ page: 1, perPage: 12, type: 'news' })
+  //       
+  //       if (!mounted || !remotePosts?.length) {
+  //         return
+  //       }
+  //
+  //       // 转换数据格式以匹配你的组件
+  //       const transformed: NewsItem[] = remotePosts.map((post: NewsBlogArticle) => ({
+  //         id: post.id,
+  //         slug: post.slug,
+  //         title: post.title,
+  //         date: post.publish_date,
+  //         // 清理 HTML 标签
+  //         excerpt: truncateExcerpt(post.excerpt, 150),
+  //         image: post.featured_image || '',
+  //         author: post.author_name,
+  //         content: post.content,
+  //         category: post.categories?.[0] || 'News',
+  //       }))
+  //
+  //       setNewsArticles(transformed)
+  //     } catch (error) {
+  //       console.error("Failed to fetch news articles:", error)
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
+  //
+  //   fetchNews()
+  //
+  //   return () => {
+  //     mounted = false
+  //   }
+  // }, [])
+
+  // 使用静态数据
   useEffect(() => {
-    let mounted = true
-
-    const fetchNews = async () => {
-      try {
-        const { data: remotePosts } = await getNewsBlogs({ page: 1, perPage: 12, type: 'news' })
-        
-        if (!mounted || !remotePosts?.length) {
-          return
-        }
-
-        // 转换数据格式以匹配你的组件
-        const transformed: NewsItem[] = remotePosts.map((post: NewsBlogArticle) => ({
-          id: post.id,
-          slug: post.slug,
-          title: post.title,
-          date: post.publish_date,
-          // 清理 HTML 标签
-          excerpt: truncateExcerpt(post.excerpt, 150),
-          image: post.featured_image || '',
-          author: post.author_name,
-          content: post.content,
-          category: post.categories?.[0] || 'News',
-        }))
-
-        setNewsArticles(transformed)
-      } catch (error) {
-        console.error("Failed to fetch news articles:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchNews()
-
-    return () => {
-      mounted = false
-    }
+    setNewsArticles(staticNews)
   }, [])
 
   // 处理 URL 参数选中文章

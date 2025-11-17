@@ -9,15 +9,19 @@ import { Footer } from "@/components/footer"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 
-// 新增：导入WordPress API
-import { getNewsBlogDetail, getAllNewsBlogPaths } from "@/lib/wordpress"
+// 注释掉 WordPress API 导入
+// import { getNewsBlogDetail, getAllNewsBlogPaths } from "@/lib/wordpress"
+
+// 从共享数据文件导入
+import { getArticleById, type StaticArticle } from "@/lib/news-blog-data"
 
 export const metadata: Metadata = {
   title: "News & Blogs",
   description: "News & Blogs",
 }
 
-// 修改：从WordPress获取所有文章路径
+// 注释掉 WordPress 静态路径生成
+// // 修改：从WordPress获取所有文章路径
 // export async function generateStaticParams() {
 //   try {
 //     const paths = await getAllNewsBlogPaths()
@@ -32,9 +36,13 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-// 修改：改为异步组件，从WordPress获取数据
-export default async function NewsArticlePage({ params }: { params: { id: string } }) {
-  const article = await getNewsBlogDetail(params.id)
+// 修改：使用静态数据
+export default function NewsArticlePage({ params }: { params: { id: string } }) {
+  // 注释掉 WordPress 数据获取
+  // const article = await getNewsBlogDetail(params.id)
+  
+  // 从共享数据文件获取文章
+  const article = getArticleById(params.id)
 
   if (!article) {
     notFound()

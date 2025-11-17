@@ -5,14 +5,25 @@ import { TopHeader } from "@/components/top-header"
 import { StickyNav } from "@/components/sticky-nav"
 import { Footer } from "@/components/footer"
 import { Metadata } from "next"
+import { getAboutSections } from "@/lib/wordpress"
+import type { AboutSection } from "@/lib/wordpress"
 
 export const metadata: Metadata = {
   title: "About Us",
   description: "About Us",
 }
 
+// 图标映射
+const iconMap: Record<string, typeof Award> = {
+  Award,
+  Factory,
+  Building2,
+  History: Building2,
+  Certificate: Award,
+}
 
-const aboutItems: Record<string, {
+// 静态 fallback 数据（当 WordPress 数据不可用时使用）
+const fallbackAboutItems: Record<string, {
   title: string
   description: string
   detailedDescription: string
@@ -54,9 +65,50 @@ const aboutItems: Record<string, {
   },
 }
 
-export default function AboutPage({ params }: { params: { section: string } }) {
-  const section = params?.section || ""
-  const item = aboutItems[section]
+export default async function AboutPage({ params }: { params: Promise<{ section: string }> }) {
+  const resolvedParams = await params
+  const section = resolvedParams?.section || ""
+  
+  // 优先从 WordPress 获取数据
+  let item: {
+    title: string
+    description: string
+    detailedDescription: string
+    image: string
+    imageAlt: string
+    icon: typeof Award
+  } | null = null
+
+  try {
+    const sections = await getAboutSections()
+    const wpSection = sections.find(s => {
+      const sectionId = s.id.toLowerCase()
+      const sectionLower = section.toLowerCase()
+      return sectionId === sectionLower || 
+             (sectionId === 'factory-overview' && sectionLower === 'factory') ||
+             (sectionLower === 'factory' && sectionId === 'factory-overview')
+    })
+    
+    if (wpSection) {
+      // 从 WordPress 数据转换
+      const IconComponent = iconMap[wpSection.icon] || Award
+      item = {
+        title: wpSection.title,
+        description: wpSection.description,
+        detailedDescription: wpSection.detailedDescription || wpSection.description,
+        image: wpSection.image || "/placeholder.svg",
+        imageAlt: wpSection.imageAlt || wpSection.title,
+        icon: IconComponent,
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load section from WordPress:", error)
+  }
+
+  // 如果 WordPress 数据不可用，使用 fallback 数据
+  if (!item) {
+    item = fallbackAboutItems[section] || null
+  }
 
   if (!item) {
     return (

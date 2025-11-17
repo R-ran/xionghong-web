@@ -145,19 +145,25 @@ function AboutPageContent({ initialSections }: { initialSections: AboutSection[]
   useEffect(() => {
     let isMounted = true
 
-    ;(async () => {
+    const fetchSections = async () => {
       try {
         const data = await getAboutSections()
+        console.log('About 页面获取到的 Sections:', data)
         if (isMounted) {
           setSections(withFallbackImages(data))
         }
       } catch (error) {
         console.error("Failed to fetch about sections on client:", error)
       }
-    })()
+    }
+
+    fetchSections()
+    // 每30秒重新获取一次，确保 WordPress 更新能及时显示
+    const interval = setInterval(fetchSections, 30000)
 
     return () => {
       isMounted = false
+      clearInterval(interval)
     }
   }, []) // 移除对initialSections的依赖，确保每次都重新获取数据
 
@@ -170,17 +176,20 @@ function AboutPageContent({ initialSections }: { initialSections: AboutSection[]
     if (sectionParam && sections.length > 0) {
       const normalized = sectionParam.toLowerCase()
       const matchingCategory = sections.find(
-        (section) => section.id.toLowerCase() === normalized
+        (section) => section.id.toLowerCase() === normalized || 
+                     section.slug?.toLowerCase() === normalized
       )
       if (matchingCategory) {
         setSelectedCategory(matchingCategory.id)
+        // 延迟清理 URL，确保状态已设置
         setTimeout(() => {
           const navElement = document.querySelector('[data-nav-section]')
           if (navElement) {
             navElement.scrollIntoView({ behavior: "smooth", block: "start" })
           }
-        }, 100)
-        router.replace("/about", { scroll: false })
+          // 清理 URL 查询参数，但保留选中的状态
+          router.replace("/about", { scroll: false })
+        }, 200)
       }
     }
   }, [searchParams, router, sections])
