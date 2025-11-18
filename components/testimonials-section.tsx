@@ -58,8 +58,8 @@ export function TestimonialsSection({ projects = [] }: TestimonialsSectionProps)
                     </div>
                     <div className="p-6">
                       <p className="text-muted-foreground mb-2 text-sm">{project.location}</p>
-                      <p className="text-muted-foreground line-clamp-3">
-                        {truncateExcerpt(project.excerpt, 120)}
+                      <p className="text-muted-foreground line-clamp-5 text-sm leading-relaxed">
+                        {truncateExcerpt(project.homepageDescription || project.excerpt, 250)}
                       </p>
                     </div>
                   </CardContent>

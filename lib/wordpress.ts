@@ -17,6 +17,7 @@ export interface Project {
   id: string
   title: string
   excerpt: string
+  homepageDescription?: string  // 首页专用描述（可选，优先使用）
   content: string
   image: string
   imageAlt: string  // ✅ 修复：添加缺失字段
@@ -334,6 +335,7 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
       // 获取meta字段数据 - 支持多种可能的字段名和API端点
       let location = ''
       let date = ''
+      let homepageDescription = ''
 
       // 尝试多种方法获取ACF字段数据
       let foundData = false
@@ -342,6 +344,7 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
       if (post.meta) {
         location = post.meta.project_location || post.meta.location || post.meta.项目地点 || ''
         date = post.meta.project_date || post.meta.date || post.meta.项目日期 || ''
+        homepageDescription = post.meta.homepage_description || post.meta.homepageDescription || ''
         if (location || date) foundData = true
       }
 
@@ -349,6 +352,9 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
       if (!foundData && post.meta_box) {
         location = post.meta_box.project_location || post.meta_box.location || post.meta_box.项目地点 || ''
         date = post.meta_box.project_date || post.meta_box.date || post.meta_box.项目日期 || ''
+        if (!homepageDescription) {
+          homepageDescription = post.meta_box.homepage_description || post.meta_box.homepageDescription || ''
+        }
         if (location || date) foundData = true
       }
 
@@ -356,7 +362,13 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
       if (!foundData && post.acf && Array.isArray(post.acf) === false) {
         location = post.acf.project_location || post.acf.location || ''
         date = post.acf.project_date || post.acf.date || ''
+        homepageDescription = post.acf.homepage_description || post.acf.homepageDescription || homepageDescription
         if (location || date) foundData = true
+      }
+
+      // 方法3.5: 单独尝试从acf获取homepageDescription（即使foundData为true）
+      if (!homepageDescription && post.acf && Array.isArray(post.acf) === false) {
+        homepageDescription = post.acf.homepage_description || post.acf.homepageDescription || ''
       }
 
       // 方法4: 通过ACF API获取
@@ -366,7 +378,17 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
           const acfData = acfFields.acf
           location = acfData.project_location || acfData.location || ''
           date = acfData.project_date || acfData.date || ''
+          homepageDescription = acfData.homepage_description || acfData.homepageDescription || homepageDescription
           if (location || date) foundData = true
+        }
+      }
+
+      // 方法4.5: 单独通过ACF API获取homepageDescription（即使foundData为true）
+      if (!homepageDescription) {
+        const acfFields = await getACFFields(post.id, wpApiUrl)
+        if (acfFields && acfFields.acf) {
+          const acfData = acfFields.acf
+          homepageDescription = acfData.homepage_description || acfData.homepageDescription || homepageDescription
         }
       }
 
@@ -376,7 +398,18 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
         if (metaFields) {
           location = metaFields.project_location || metaFields.location || metaFields.项目地点 || location
           date = metaFields.project_date || metaFields.date || metaFields.项目日期 || date
+          if (!homepageDescription) {
+            homepageDescription = metaFields.homepage_description || metaFields.homepageDescription || ''
+          }
           if (location || date) foundData = true
+        }
+      }
+
+      // 方法5.5: 单独通过post meta API获取homepageDescription（即使foundData为true）
+      if (!homepageDescription) {
+        const metaFields = await getPostMetaFields(post.id, wpApiUrl)
+        if (metaFields) {
+          homepageDescription = metaFields.homepage_description || metaFields.homepageDescription || ''
         }
       }
 
@@ -407,6 +440,10 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
                 'project_date_cn', 'project_date_en',
                 'field_project_date', 'field_date'
               ]
+              const possibleHomepageDescKeys = [
+                'homepage_description', 'homepageDescription',
+                'field_homepage_description', 'field_homepageDescription'
+              ]
 
               for (const key of possibleLocationKeys) {
                 if (postData.meta[key] && postData.meta[key] !== '') {
@@ -423,10 +460,51 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
                   break
                 }
               }
+
+              for (const key of possibleHomepageDescKeys) {
+                if (postData.meta[key] && postData.meta[key] !== '') {
+                  homepageDescription = postData.meta[key]
+                  break
+                }
+              }
             }
           }
         } catch (error) {
           console.error('直接查询meta字段失败:', error)
+        }
+      }
+
+      // 方法6.5: 单独查询homepageDescription（即使foundData为true）
+      if (!homepageDescription) {
+        try {
+          const descMetaRes = await fetch(
+            `${wpApiUrl}/wp-json/wp/v2/successful_project/${post.id}?context=edit`,
+            {
+              next: { revalidate: 60 },
+              headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+              }
+            }
+          )
+
+          if (descMetaRes.ok) {
+            const postData = await descMetaRes.json()
+            if (postData.meta) {
+              const possibleHomepageDescKeys = [
+                'homepage_description', 'homepageDescription',
+                'field_homepage_description', 'field_homepageDescription',
+                'acf_homepage_description', 'acf_homepageDescription'
+              ]
+              for (const key of possibleHomepageDescKeys) {
+                if (postData.meta[key] && postData.meta[key] !== '') {
+                  homepageDescription = postData.meta[key]
+                  break
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('单独查询homepageDescription失败:', error)
         }
       }
 
@@ -469,12 +547,27 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
         date = projectDate.getFullYear().toString()
       }
 
-      if (!foundData) {
-      console.log(`未找到项目 "${post.title.rendered}" 的ACF字段数据，使用默认值: location=${location}, date=${date}`)
-    }
-
       // 处理 excerpt：移除 HTML 标签并解码 HTML 实体
       const cleanExcerpt = decodeHtmlEntities(post.excerpt?.rendered || '')
+
+      // 处理 homepageDescription：解码 HTML 实体
+      const cleanHomepageDescription = homepageDescription 
+        ? decodeHtmlEntities(homepageDescription) 
+        : undefined
+
+      // 处理 title：解码 HTML 实体（如 &#8217; 等）
+      const cleanTitle = decodeHtmlEntities(post.title?.rendered || '')
+
+      // 调试信息：输出 homepageDescription 的获取情况
+      if (cleanHomepageDescription) {
+        console.log(`✅ 项目 "${cleanTitle}" 找到首页描述: ${cleanHomepageDescription.substring(0, 50)}...`)
+      } else {
+        console.log(`⚠️ 项目 "${cleanTitle}" 未找到首页描述，将使用 excerpt`)
+      }
+
+      if (!foundData) {
+      console.log(`未找到项目 "${cleanTitle}" 的ACF字段数据，使用默认值: location=${location}, date=${date}`)
+    }
 
       // 解码URL编码的slug，特别是中文slug
       let decodedSlug = post.slug
@@ -487,11 +580,12 @@ async function transformProjects(wpPosts: any[], wpApiUrl: string): Promise<Proj
 
       return {
         id: post.id.toString(),
-        title: post.title.rendered,
+        title: cleanTitle,
         excerpt: cleanExcerpt,
+        homepageDescription: cleanHomepageDescription,
         content: post.content.rendered,
         image: imageUrl,
-        imageAlt: post.title.rendered,
+        imageAlt: cleanTitle,
         location: location,
         date: date,
         slug: decodedSlug,
@@ -552,6 +646,25 @@ async function getACFFields(postId: number, wpApiUrl: string): Promise<any> {
     if (customAcfRes.ok) {
       const customAcfData = await customAcfRes.json()
       return customAcfData.acf || {}
+    }
+
+    // 方法4: 尝试通过 WP REST API 直接获取（ACF 可能已经包含在响应中）
+    // 这个方法会在 transformProjects 中通过 post.acf 访问，但这里也尝试一下
+    const wpRes = await fetch(
+      `${wpApiUrl}/wp-json/wp/v2/successful_project/${postId}?_embed`,
+      {
+        next: { revalidate: 60 },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        }
+      }
+    )
+
+    if (wpRes.ok) {
+      const wpData = await wpRes.json()
+      if (wpData.acf && Array.isArray(wpData.acf) === false) {
+        return { acf: wpData.acf }
+      }
     }
 
     return {}

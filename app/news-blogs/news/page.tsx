@@ -139,7 +139,8 @@ function NewsPageContent() {
       <main className="pt-12">
         <div className="container mx-auto px-4 mb-4">
           <div className="text-muted-foreground text-sm">
-            Your Position : <Link href="/" className="hover:text-primary">Home</Link> &gt; News & Blogs &gt; News
+            Your Position : <Link href="/" className="hover:text-primary">Home</Link> 
+            &gt; <Link href="/news-blogs" className="hover:text-primary">News & Blogs</Link> &gt; News
           </div>
         </div>
 

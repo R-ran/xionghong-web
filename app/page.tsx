@@ -20,7 +20,55 @@ export default async function Home() {
   // 在服务器端获取成功案例数据
   let projects = []
   try {
-    projects = await getProjects()
+    const allProjects = await getProjects()
+    
+    // 筛选国内项目中的两个特定项目
+    const chinaProjects = allProjects.filter(project => {
+      const categories = project.categories || []
+      const isChinaProject = categories.some(cat => 
+        cat.toLowerCase().includes('china') || 
+        cat.toLowerCase().includes('国内')
+      )
+      
+      if (!isChinaProject) return false
+      
+      const title = project.title
+      return title.includes("Huishan Tunnel Project") || 
+             title.includes("Qinghai Guanjiao Tunnel")
+    })
+    
+    // 按指定顺序排序：先 Huishan，再 Qinghai
+    const sortedChinaProjects = chinaProjects.sort((a, b) => {
+      const aIsHuishan = a.title.includes("Huishan Tunnel Project")
+      const bIsHuishan = b.title.includes("Huishan Tunnel Project")
+      if (aIsHuishan && !bIsHuishan) return -1
+      if (!aIsHuishan && bIsHuishan) return 1
+      return 0
+    })
+    
+    // 筛选海外项目
+    const overseasProjects = allProjects.filter(project => {
+      const categories = project.categories || []
+      return categories.some(cat => 
+        cat.toLowerCase().includes('overseas') || 
+        cat.toLowerCase().includes('海外')
+      )
+    })
+    
+    // 取海外项目的前两个
+    const selectedOverseasProjects = overseasProjects.slice(0, 2)
+    
+    // 组合：国内项目2个 + 海外项目2个
+    projects = [
+      ...sortedChinaProjects.slice(0, 2),
+      ...selectedOverseasProjects
+    ]
+    
+    // 如果找不到足够的项目，使用原始数据的前4个作为后备
+    if (projects.length < 4) {
+      console.warn('未找到足够的固定项目，使用默认项目')
+      projects = allProjects.slice(0, 4)
+    }
   } catch (error) {
     console.error('首页获取成功案例失败:', error)
     // 如果获取失败，使用空数组，组件会显示"暂无数据"
