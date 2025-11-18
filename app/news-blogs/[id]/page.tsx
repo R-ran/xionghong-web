@@ -68,7 +68,7 @@ export default function NewsArticlePage({ params }: { params: { id: string } }) 
               <span className="inline-block bg-primary text-primary-foreground px-4 py-1 text-sm font-medium rounded">
                 {article.categories?.[0] || article.type}
               </span>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-balance mx-auto max-w-4xl">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-balance mx-auto max-w-4xl">
                 {article.title}
               </h1>
               <div className="flex flex-wrap items-center justify-center gap-4 text-muted-foreground">
@@ -103,7 +103,7 @@ export default function NewsArticlePage({ params }: { params: { id: string } }) 
             {/* 文章内容 */}
             <div className="max-w-4xl mx-auto">
               <div
-                className="prose prose-lg max-w-none"
+                className="prose prose-2xl max-w-none"
                 dangerouslySetInnerHTML={{ __html: article.content }}
                 style={{
                   lineHeight: "1.8",

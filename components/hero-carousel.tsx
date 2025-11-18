@@ -6,24 +6,24 @@ import { Button } from "@/components/ui/button"
 
 const slides = [
   {
-    title: "SINOROCK SDA BOLT",
-    subtitle: "GREAT REPUTATION IN THE INDUSTRY",
-    description: "ESCORT YOUR PROJECT",
+    title: "Professional manufacturer",
+    subtitle: "on hollow anchor bolts since 2006",
+    description: "",
     image: "/industrial-construction-site-with-rock-bolts.jpg",
     imageAlt: "SINOROCK self-drilling anchor bolts reinforcing an industrial construction site",
   },
   {
-    title: "INNOVATIVE SOLUTIONS",
-    subtitle: "LEADING TECHNOLOGY",
-    description: "SAFER SPACE, BETTER LIFE",
-    image: "/modern-factory-production-line.png",
+    title: "Supreme Quality",
+    subtitle: "export more than 120 countries",
+    description: "",
+    image: "/industrial-factory-production-floor.jpg",
     imageAlt: "Modern SINOROCK factory production line manufacturing anchor bolts",
   },
   {
-    title: "QUALITY ASSURANCE",
-    subtitle: "TRUSTED WORLDWIDE",
-    description: "EXCELLENCE IN EVERY DETAIL",
-    image: "/quality-control-inspection-equipment.jpg",
+    title: "Application:",
+    subtitle: "Tunnel, Railway, High-speed Roads, Mine, Civil engineering. ",
+    description: "",
+    image: "/tunnel-construction-project.jpg",
     imageAlt: "Quality control inspection of SINOROCK anchor bolt components",
   },
 ]

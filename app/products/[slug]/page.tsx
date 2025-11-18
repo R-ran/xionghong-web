@@ -290,7 +290,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     <Phone className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
                     <div>
                       <div className="font-bold text-gray-800 mb-1">Phone</div>
-                      <div className="text-sm text-gray-700">+00-370-00207220</div>
+                      <div className="text-sm text-gray-700">+86-18021425296</div>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -312,7 +312,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     <div>
                       <div className="font-bold text-gray-800 mb-1">Address</div>
                       <div className="text-sm text-gray-700 leading-relaxed">
-                        No.1703, Building 3, No. 1 Ganghua Road, Luolong District, Luoyang, China (Henan Pilot Free Trade Zone), Henan Province, P.R. China
+                      Ronghu Village, Yuqi Supporting Area, Huishan Economic Development Zone, Wuxi City, Jiangsu Province, China
                       </div>
                     </div>
                   </div>

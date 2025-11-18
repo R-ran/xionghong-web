@@ -129,3 +129,69 @@
     scroll-behavior: smooth;
   }
 }
+
+/* 自定义 news 和 blogs 文章内容中的小标题样式 */
+.prose h2 {
+  font-weight: 700;
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.3;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.prose h3 {
+  font-weight: 700;
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.3;
+  margin-top: 1.25em;
+  margin-bottom: 0.625em;
+}
+
+.prose h4 {
+  font-weight: 700;
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.3;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.prose h5 {
+  font-weight: 700;
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.3;
+  margin-top: 0.875em;
+  margin-bottom: 0.5em;
+}
+
+.prose h6 {
+  font-weight: 700;
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.3;
+  margin-top: 0.75em;
+  margin-bottom: 0.5em;
+}
+
+/* 支持非标准的 h7-h15 标签（用于文章内容中的小标题） */
+.prose h7,
+.prose h8,
+.prose h9,
+.prose h10,
+.prose h11,
+.prose h12,
+.prose h13,
+.prose h14,
+.prose h15 {
+  font-weight: 700;
+  font-size: 1.125rem; /* 18px - 与 h5 相同大小 */
+  line-height: 1.3;
+  margin-top: 0.875em;
+  margin-bottom: 0.5em;
+  display: block; /* 确保作为块级元素显示 */
+}
+
+/* 确保段落内容不加粗，只有标题加粗，并统一字体大小 */
+.prose p {
+  font-weight: 400; /* 正常字重，不加粗 */
+  font-size: 1.125rem; /* 18px - 与 prose-2xl 的段落字体大小一致 */
+  line-height: 1.75; /* 行高 */
+}

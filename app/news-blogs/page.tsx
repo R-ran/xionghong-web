@@ -124,9 +124,34 @@ export default function NewsBlogPage() {
         <div className="container mx-auto px-4 pb-20">
           {selectedArticle ? (
             <div className="rounded-2xl border bg-card shadow-sm">
-              <div className="flex flex-col gap-10 p-6 lg:flex-row lg:p-10">
-                <div className="w-full lg:w-1/2">
-                  <div className="relative w-full overflow-hidden rounded-xl bg-muted aspect-[4/5] lg:aspect-[3/4]">
+              <div className="flex flex-col gap-10 p-6 lg:p-10">
+                {/* 标题部分 - 最上面 */}
+                <div className="space-y-4">
+                  <span className="inline-block bg-primary text-primary-foreground px-4 py-1 text-sm font-medium rounded">
+                    {selectedArticle.categories?.[0] || selectedArticle.type}
+                  </span>
+                  <h2 className="text-5xl md:text-6xl font-bold text-balance">{selectedArticle.title}</h2>
+                  <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+                    <span className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      {new Date(selectedArticle.publish_date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                    {selectedArticle.author_name && (
+                      <span className="flex items-center gap-2">
+                        <PenLine className="h-4 w-4" />
+                        {selectedArticle.author_name}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 图片部分 - 中间 */}
+                <div className="w-full">
+                  <div className="relative w-full overflow-hidden rounded-xl bg-muted aspect-[16/9]">
                     <img
                       src={selectedArticle.featured_image || "/placeholder.svg"}
                       alt={selectedArticle.title}
@@ -135,32 +160,10 @@ export default function NewsBlogPage() {
                   </div>
                 </div>
 
-                <div className="w-full space-y-6 lg:w-1/2">
-                  <div className="space-y-4">
-                    <span className="inline-block bg-primary text-primary-foreground px-4 py-1 text-sm font-medium rounded">
-                      {selectedArticle.categories?.[0] || selectedArticle.type}
-                    </span>
-                    <h2 className="text-4xl font-bold text-balance">{selectedArticle.title}</h2>
-                    <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-                      <span className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        {new Date(selectedArticle.publish_date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </span>
-                      {selectedArticle.author_name && (
-                        <span className="flex items-center gap-2">
-                          <PenLine className="h-4 w-4" />
-                          {selectedArticle.author_name}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
+                {/* 内容部分 - 最下面 */}
+                <div className="space-y-6">
                   <div
-                    className="prose prose-lg max-w-none"
+                    className="prose prose-2xl max-w-none"
                     dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
                     style={{
                       lineHeight: "1.8",
