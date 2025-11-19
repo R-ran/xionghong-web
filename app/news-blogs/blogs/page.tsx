@@ -11,20 +11,11 @@ import { StickyNav } from "@/components/sticky-nav"
 import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-// 注释掉 WordPress 导入
-// import { getNewsBlogs, truncateExcerpt } from "@/lib/wordpress"
-// import type { NewsBlogArticle } from "@/lib/wordpress"
+// WordPress 导入
+import { getNewsBlogs, truncateExcerpt } from "@/lib/wordpress"
+import type { NewsBlogArticle } from "@/lib/wordpress"
 
-// 从共享数据文件导入
-import { getBlogArticles } from "@/lib/news-blog-data"
-
-// 辅助函数：截断文本
-function truncateExcerpt(text: string, maxLength: number): string {
-  if (!text) return ''
-  const cleaned = text.replace(/<[^>]*>/g, '')
-  if (cleaned.length <= maxLength) return cleaned
-  return cleaned.substring(0, maxLength) + '...'
-}
+// truncateExcept 函数已在 wordpress.ts 中定义，这里不再重复定义
 
 type BlogItem = {
   id: string | number
@@ -61,8 +52,7 @@ export default function BlogPage() {
 function BlogPageContent() {
   const [posts, setPosts] = useState<BlogItem[]>([])
   const [selectedPost, setSelectedPost] = useState<BlogItem | null>(null)
-  // 注释掉 loading 状态（不再需要）
-  // const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -70,64 +60,45 @@ function BlogPageContent() {
     window.scrollTo(0, 0)
   }, [])
 
-  // 从共享数据文件获取博客数据
-  const staticBlogs: BlogItem[] = getBlogArticles().map(article => ({
-    id: article.id,
-    slug: article.id, // 使用 id 作为 slug
-    title: article.title,
-    date: article.publish_date,
-    excerpt: article.excerpt,
-    image: article.featured_image,
-    author: article.author_name,
-    content: article.content,
-    category: article.categories?.[0] || 'Blogs'
-  }))
-
-  // 注释掉 WordPress 数据获取
-  // // 从 WordPress 获取 Blogs 类型文章
-  // useEffect(() => {
-  //   let mounted = true
-  //
-  //   const fetchBlogs = async () => {
-  //     try {
-  //       const { data: remotePosts } = await getNewsBlogs({ page: 1, perPage: 12, type: 'blogs' })
-  //       
-  //       if (!mounted || !remotePosts?.length) {
-  //         return
-  //       }
-  //
-  //       // 转换数据格式以匹配你的组件
-  //       const transformed: BlogItem[] = remotePosts.map((post: NewsBlogArticle) => ({
-  //         id: post.id,
-  //         slug: post.slug,
-  //         title: post.title,
-  //         date: post.publish_date,
-  //         // 清理 HTML 标签
-  //         excerpt: truncateExcerpt(post.excerpt, 150),
-  //         image: post.featured_image || '',
-  //         author: post.author_name,
-  //         content: post.content,
-  //         category: post.categories?.[0] || 'Blogs',
-  //       }))
-  //
-  //       setPosts(transformed)
-  //     } catch (error) {
-  //       console.error("Failed to fetch blog posts:", error)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-  //
-  //   fetchBlogs()
-  //
-  //   return () => {
-  //     mounted = false
-  //   }
-  // }, [])
-
-  // 使用静态数据
+  // 从 WordPress 获取 Blogs 类型文章
   useEffect(() => {
-    setPosts(staticBlogs)
+    let mounted = true
+
+    const fetchBlogs = async () => {
+      try {
+        const { data: remotePosts } = await getNewsBlogs({ page: 1, perPage: 12, type: 'blogs' })
+
+        if (!mounted || !remotePosts?.length) {
+          return
+        }
+
+        // 转换数据格式以匹配你的组件
+        const transformed: BlogItem[] = remotePosts.map((post: NewsBlogArticle) => ({
+          id: post.id,
+          slug: post.slug,
+          title: post.title,
+          date: post.publish_date,
+          // 清理 HTML 标签
+          excerpt: truncateExcerpt(post.excerpt, 150),
+          image: post.featured_image || '',
+          author: post.author_name,
+          content: post.content,
+          category: post.categories?.[0] || 'Blogs',
+        }))
+
+        setPosts(transformed)
+      } catch (error) {
+        console.error("Failed to fetch blog posts:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBlogs()
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
   // 处理 URL 参数选中文章
@@ -167,7 +138,12 @@ function BlogPageContent() {
         </div>
 
         <div className="container mx-auto px-4 pb-20">
-          {selectedPost ? (
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <p className="ml-4 text-muted-foreground">Loading blog posts...</p>
+            </div>
+          ) : selectedPost ? (
             <div className="rounded-2xl border bg-card shadow-sm">
               <div className="flex flex-col gap-10 p-6 lg:p-10">
                 {/* 标题部分 - 最上面 */}

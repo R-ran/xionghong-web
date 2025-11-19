@@ -9,64 +9,58 @@ import { StickyNav } from "@/components/sticky-nav"
 import { Footer } from "@/components/footer"
 import { useEffect, useState } from "react"
 
-// 注释掉 WordPress API 导入
-// import { getNewsBlogs } from "@/lib/wordpress"
-// import type { NewsBlogArticle } from "@/lib/wordpress"
-
-// 从共享数据文件导入
-import { staticArticles, type StaticArticle } from "@/lib/news-blog-data"
+// WordPress API 导入
+import { getNewsBlogs } from "@/lib/wordpress"
+import type { NewsBlogArticle } from "@/lib/wordpress"
 
 export default function NewsBlogPage() {
-  // 注释掉 WordPress 状态管理
-  // const [articles, setArticles] = useState<NewsBlogArticle[]>([])
-  // const [loading, setLoading] = useState(false)
-  // const [error, setError] = useState<string | null>(null)
-  const [selectedArticle, setSelectedArticle] = useState<StaticArticle | null>(null)
-  const articles = staticArticles
+  const [articles, setArticles] = useState<NewsBlogArticle[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedArticle, setSelectedArticle] = useState<NewsBlogArticle | null>(null)
 
   useEffect(() => {
     window.scrollTo(0, 0)
+  })
+
+  // 从 WordPress 获取文章数据
+  useEffect(() => {
+    window.scrollTo(0, 0)
+
+    // 获取文章数据
+    async function fetchArticles() {
+      try {
+        console.log('准备调用 getNewsBlogs...')
+        const result = await getNewsBlogs({ page:1, perPage:12 })
+        console.log('API 调用成功:',result)
+
+        setArticles(result.data)
+      } catch (err) {
+
+        console.error('API 调用失败:', err)
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchArticles()
   }, [])
 
-  // 注释掉 WordPress 数据获取
-  // useEffect(() => {
-  //   window.scrollTo(0, 0)
-  //
-  //   // 获取文章数据
-  //   async function fetchArticles() {
-  //     try {
-  //       console.log('准备调用 getNewsBlogs...')
-  //       const result = await getNewsBlogs({ page:1, perPage:12 })
-  //       console.log('API 调用成功:',result)
-  //       
-  //       setArticles(result.data)
-  //     } catch (err) {
-  //       
-  //       console.error('API 调用失败:', err)
-  //       setError(err instanceof Error ? err.message : 'Unknown error')
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-  //   fetchArticles()
-  // }, [])
-
-  // 注释掉错误状态处理
-  // // 错误状态
-  // if (error) {
-  //   return (
-  //     <div className="min-h-screen bg-background">
-  //       <TopHeader />
-  //       <StickyNav />
-  //       <main className="pt-12">
-  //         <div className="container mx-auto px-4 text-center py-20">
-  //           <p className="text-lg text-red-500">{error}</p>
-  //         </div>
-  //       </main>
-  //       <Footer />
-  //     </div>
-  //   )
-  // }
+  // 错误状态
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopHeader />
+        <StickyNav />
+        <main className="pt-12">
+          <div className="container mx-auto px-4 text-center py-20">
+            <p className="text-lg text-red-500">{error}</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,7 +116,12 @@ export default function NewsBlogPage() {
 
         {/* News Cards */}
         <div className="container mx-auto px-4 pb-20">
-          {selectedArticle ? (
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <p className="ml-4 text-muted-foreground">Loading articles...</p>
+            </div>
+          ) : selectedArticle ? (
             <div className="rounded-2xl border bg-card shadow-sm">
               <div className="flex flex-col gap-10 p-6 lg:p-10">
                 {/* 标题部分 - 最上面 */}

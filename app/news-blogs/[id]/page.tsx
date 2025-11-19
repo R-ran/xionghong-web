@@ -9,40 +9,34 @@ import { Footer } from "@/components/footer"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 
-// 注释掉 WordPress API 导入
-// import { getNewsBlogDetail, getAllNewsBlogPaths } from "@/lib/wordpress"
-
-// 从共享数据文件导入
-import { getArticleById, type StaticArticle } from "@/lib/news-blog-data"
+// WordPress API 导入
+import { getNewsBlogDetail, getAllNewsBlogPaths } from "@/lib/wordpress"
+import type { NewsBlogArticle } from "@/lib/wordpress"
 
 export const metadata: Metadata = {
   title: "News & Blogs",
   description: "News & Blogs",
 }
 
-// 注释掉 WordPress 静态路径生成
-// // 修改：从WordPress获取所有文章路径
-// export async function generateStaticParams() {
-//   try {
-//     const paths = await getAllNewsBlogPaths()
-//     // 只返回有效的路径
-//     return paths.filter(path => path.id && path.slug).map(({ id }) => ({ id }))
-//   } catch (error) {
-//     console.warn('⚠️ Failed to generate static params for news-blogs:', error)
-//     // 返回空数组，避免构建失败
-//     return []
-//   }
-// }
+// 修改：从WordPress获取所有文章路径
+export async function generateStaticParams() {
+  try {
+    const paths = await getAllNewsBlogPaths()
+    // 只返回有效的路径
+    return paths.filter(path => path.id && path.slug).map(({ id }) => ({ id }))
+  } catch (error) {
+    console.warn('⚠️ Failed to generate static params for news-blogs:', error)
+    // 返回空数组，避免构建失败
+    return []
+  }
+}
 
 export const dynamic = "force-dynamic";
 
-// 修改：使用静态数据
-export default function NewsArticlePage({ params }: { params: { id: string } }) {
-  // 注释掉 WordPress 数据获取
-  // const article = await getNewsBlogDetail(params.id)
-  
-  // 从共享数据文件获取文章
-  const article = getArticleById(params.id)
+// 修改：使用WordPress数据
+export default async function NewsArticlePage({ params }: { params: { id: string } }) {
+  // 从WordPress获取文章详情
+  const article = await getNewsBlogDetail(params.id)
 
   if (!article) {
     notFound()
