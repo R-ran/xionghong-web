@@ -12,38 +12,38 @@ import { useEffect, useState } from "react"
 // WordPress API 导入
 import type { NewsBlogArticle } from "@/lib/wordpress"
 
-// 获取数据的辅助函数
-async function getNewsBlogsData() {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3002'}/api/news-blogs?perPage=12`, {
-      cache: 'no-store'
-    })
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    const result = await response.json()
-    return result.data || []
-  } catch (error) {
-    console.error("Failed to fetch articles:", error)
-    return []
-  }
-}
-
-export default async function NewsBlogPage() {
-  // 服务器端获取数据
-  const articles = await getNewsBlogsData()
-
-  return <NewsBlogPageContent articles={articles} />
-}
-
-function NewsBlogPageContent({ articles }: { articles: NewsBlogArticle[] }) {
-  "use client"
-
+export default function NewsBlogPage() {
+  const [articles, setArticles] = useState<NewsBlogArticle[]>([])
   const [selectedArticle, setSelectedArticle] = useState<NewsBlogArticle | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  // 获取数据的辅助函数
+  useEffect(() => {
+    async function getNewsBlogsData() {
+      try {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3002')
+        const response = await fetch(`${siteUrl}/api/news-blogs?perPage=12`, {
+          cache: 'no-store'
+        })
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const result = await response.json()
+        setArticles(result.data || [])
+      } catch (error) {
+        console.error("Failed to fetch articles:", error)
+        setArticles([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    getNewsBlogsData()
+  }, [])
 
   useEffect(() => {
     window.scrollTo(0, 0)
-  })
+  }, [])
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,7 +99,17 @@ function NewsBlogPageContent({ articles }: { articles: NewsBlogArticle[] }) {
 
         {/* News Cards */}
         <div className="container mx-auto px-4 pb-20">
-          {selectedArticle ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading articles...</p>
+            </div>
+          ) : articles.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground text-lg mb-4">No articles found.</p>
+              <p className="text-muted-foreground text-sm">Please check back later or visit our News and Blogs sections.</p>
+            </div>
+          ) : selectedArticle ? (
             <div className="rounded-2xl border bg-card shadow-sm">
               <div className="flex flex-col gap-10 p-6 lg:p-10">
                 {/* 标题部分 - 最上面 */}
