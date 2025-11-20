@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Calendar, ArrowLeft, PenLine } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 
 import { TopHeader } from "@/components/top-header"
 import { StickyNav } from "@/components/sticky-nav"
@@ -44,7 +44,8 @@ type NewsItem = {
   category?: string
 }
 
-export default function NewsPage() {
+// 内部组件：处理 useSearchParams
+function NewsContent() {
   const [newsArticles, setNewsArticles] = useState<NewsItem[]>([])
   const [selectedArticle, setSelectedArticle] = useState<NewsItem | null>(null)
   const [loading, setLoading] = useState(true)
@@ -116,6 +117,119 @@ export default function NewsPage() {
   
   
   return (
+    <>
+      <div className="container mx-auto px-4 pb-20">
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p className="ml-4 text-muted-foreground">Loading news articles...</p>
+          </div>
+        ) : selectedArticle ? (
+          <div className="rounded-2xl border bg-card shadow-sm">
+            <div className="flex flex-col gap-10 p-6 lg:p-10">
+              {/* 标题部分 - 最上面 */}
+              <div className="space-y-4">
+                <span className="inline-block bg-primary text-primary-foreground px-4 py-1 text-sm font-medium rounded">
+                  {selectedArticle.category}
+                </span>
+                <h2 className="text-5xl md:text-6xl font-bold text-balance">{selectedArticle.title}</h2>
+                <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+                  <span className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    {new Date(selectedArticle.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                  {selectedArticle.author && (
+                    <span className="flex items-center gap-2">
+                      <PenLine className="h-4 w-4" />
+                      {selectedArticle.author}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* 图片部分 - 中间 */}
+              <div className="w-full">
+                <div className="relative w-full overflow-hidden rounded-xl bg-muted aspect-[16/9]">
+                  <img
+                    src={selectedArticle.image || "/placeholder.svg"}
+                    alt={selectedArticle.title}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+
+              {/* 内容部分 - 最下面 */}
+              <div className="space-y-6">
+                <div
+                  className="prose prose-2xl max-w-none news-content"
+                  dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
+                  style={{
+                    lineHeight: "1.8",
+                  }}
+                />
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button variant="outline" onClick={() => setSelectedArticle(null)}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to list
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {newsArticles.map((item) => (
+              <Card key={item.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
+                <div className="relative h-52 overflow-hidden">
+                  <img
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1 text-sm font-medium rounded">
+                    {item.category}
+                  </div>
+                </div>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                    <Calendar className="h-4 w-4" />
+                    <span>
+                      {new Date(item.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-semibold mb-3 text-balance">{item.title}</h2>
+                  <p className="text-muted-foreground mb-4 text-pretty line-clamp-3">
+                    {truncateExcerpt(item.excerpt, 150)}
+                  </p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-primary"
+                    onClick={() => setSelectedArticle(item)}
+                  >
+                    View More →
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+// 外部组件：包装 Suspense
+export default function NewsPage() {
+  return (
     <div className="min-h-screen bg-background">
       <TopHeader />
       <StickyNav />
@@ -138,111 +252,16 @@ export default function NewsPage() {
           </p>
         </div>
 
-        <div className="container mx-auto px-4 pb-20">
-          {loading ? (
+        <Suspense fallback={
+          <div className="container mx-auto px-4 pb-20">
             <div className="flex justify-center items-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="ml-4 text-muted-foreground">Loading news articles...</p>
+              <p className="ml-4 text-muted-foreground">Loading...</p>
             </div>
-          ) : selectedArticle ? (
-            <div className="rounded-2xl border bg-card shadow-sm">
-              <div className="flex flex-col gap-10 p-6 lg:p-10">
-                {/* 标题部分 - 最上面 */}
-                <div className="space-y-4">
-                  <span className="inline-block bg-primary text-primary-foreground px-4 py-1 text-sm font-medium rounded">
-                    {selectedArticle.category}
-                  </span>
-                  <h2 className="text-5xl md:text-6xl font-bold text-balance">{selectedArticle.title}</h2>
-                  <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-                    <span className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      {new Date(selectedArticle.date).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </span>
-                    {selectedArticle.author && (
-                      <span className="flex items-center gap-2">
-                        <PenLine className="h-4 w-4" />
-                        {selectedArticle.author}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* 图片部分 - 中间 */}
-                <div className="w-full">
-                  <div className="relative w-full overflow-hidden rounded-xl bg-muted aspect-[16/9]">
-                    <img
-                      src={selectedArticle.image || "/placeholder.svg"}
-                      alt={selectedArticle.title}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                </div>
-
-                {/* 内容部分 - 最下面 */}
-                <div className="space-y-6">
-                  <div
-                    className="prose prose-2xl max-w-none news-content"
-                    dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
-                    style={{
-                      lineHeight: "1.8",
-                    }}
-                  />
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button variant="outline" onClick={() => setSelectedArticle(null)}>
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back to list
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {newsArticles.map((item) => (
-                <Card key={item.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
-                  <div className="relative h-52 overflow-hidden">
-                    <img
-                      src={item.image || "/placeholder.svg"}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1 text-sm font-medium rounded">
-                      {item.category}
-                    </div>
-                  </div>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {new Date(item.date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </span>
-                    </div>
-                    <h2 className="text-2xl font-semibold mb-3 text-balance">{item.title}</h2>
-                    <p className="text-muted-foreground mb-4 text-pretty line-clamp-3">
-                      {truncateExcerpt(item.excerpt, 150)}
-                    </p>
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto text-primary"
-                      onClick={() => setSelectedArticle(item)}
-                    >
-                      View More →
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
+        }>
+          <NewsContent />
+        </Suspense>
       </main>
 
       <Footer />
