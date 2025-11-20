@@ -24,7 +24,7 @@ const WechatIcon = ({ className }: { className?: string }) => (
 export function FloatingContactBar() {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
-  const email = "sinorock@sinorockco.com"
+  const email = "export@cnxhanchor.com"
   const whatsapp = "+8618662678180"
   const wechatQRCode = "/wechat-qr.png" // 微信二维码图片路径
 
@@ -101,14 +101,14 @@ export function FloatingContactBar() {
             }`}
             aria-label="WeChat"
           >
-            <Image src="/WeChat.png" alt="WeChat icon for SINOROCK service" width={24} height={24} className="w-6 h-6" />
+            <Image src="/WeChat.png" alt="WeChat icon for XINHONG service" width={24} height={24} className="w-6 h-6" />
           </button>
           {hoveredItem === "wechat" && (
             <div className="absolute right-full top-0 mr-2 bg-white p-4 rounded-lg shadow-xl z-[10000]">
               <div className="w-36 h-36 bg-gray-50 rounded border-2 border-gray-200 flex items-center justify-center overflow-hidden">
                 <img
                   src={wechatQRCode}
-                  alt="Scan to connect with SINOROCK support on WeChat"
+                  alt="Scan to connect with XINHONG support on WeChat"
                   className="w-full h-full object-contain"
                   onError={(e) => {
                     // 如果图片加载失败，显示占位符

@@ -83,8 +83,8 @@ export function TopHeader() {
             {/* Email - 移动端隐藏文字，只显示图标或简化 */}
             <div className="flex items-center gap-1 sm:gap-2 text-muted-foreground">
               <span className="hidden sm:inline">Email:</span>
-              <a href="mailto:sinorock@sinorockco.com" className="hover:text-primary transition-colors truncate max-w-[120px] sm:max-w-none">
-                <span className="hidden sm:inline">sinorock@sinorockco.com</span>
+              <a href="mailto:sales@cnxhanchor.com" className="hover:text-primary transition-colors truncate max-w-[120px] sm:max-w-none">
+                <span className="hidden sm:inline">export@cnxhanchor.com</span>
                 <span className="sm:hidden text-[10px]">Email</span>
               </a>
             </div>

@@ -280,8 +280,8 @@ function ProductsPageContent() {
                   <div className="flex items-start gap-4">
                     <Printer className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
                     <div>
-                      <div className="font-bold text-gray-800 mb-1">Fax</div>
-                      <div className="text-sm text-gray-700">86-379-64386676</div>
+                      <div className="font-bold text-gray-800 mb-1">Tel</div>
+                      <div className="text-sm text-gray-700">+86-510-85161569</div>
                     </div>
                   </div>
 
@@ -290,7 +290,7 @@ function ProductsPageContent() {
                     <Mail className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
                     <div>
                       <div className="font-bold text-gray-800 mb-1">E-mail</div>
-                      <div className="text-sm text-gray-700">sinorock@sinorockco.com</div>
+                      <div className="text-sm text-gray-700">export@cnxhanchor.com</div>
                     </div>
                   </div>
 
