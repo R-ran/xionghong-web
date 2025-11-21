@@ -388,7 +388,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
               <div className="bg-white p-4 shadow-sm mb-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Product Image */}
-                  <div className="bg-muted rounded-lg overflow-hidden h-80 md:h-[400px] relative flex items-center justify-center">
+                  <div className="rounded-lg overflow-hidden h-80 md:h-[400px] relative flex items-center justify-center">
                     <img
                       src={productImage}
                       alt={productImageAlt}

@@ -54,7 +54,7 @@ export function CustomerMessagesSection() {
           {/* Left side - Image */}
           <div className="relative h-[500px] rounded-lg overflow-hidden">
             <img
-              src="/customer.png"
+              src="/customer.jpg"
               alt="Satisfied XINHONG clients discussing anchor bolt performance"
               className="w-full h-full object-cover"
             />

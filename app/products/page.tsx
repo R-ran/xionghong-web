@@ -347,11 +347,11 @@ function ProductsPageContent() {
                     <Card className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all bg-white h-full">
                       <CardContent className="p-0 h-full flex flex-col">
                         {/* Image Section */}
-                        <div className="relative w-full h-48 overflow-hidden bg-muted">
+                        <div className="relative w-full h-48 overflow-hidden flex items-center justify-center">
                           <img
                             src={product.image}
                             alt={product.imageAlt}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                         

@@ -86,11 +86,11 @@ export function ProductsSection() {
                         {isImageTop ? (
                           <>
                             {/* Image on top */}
-                            <div className="relative h-full w-full overflow-hidden bg-white">
+                            <div className="relative h-full w-full overflow-hidden flex items-center justify-center bg-white">
                               <img
                                 src={productImage}
                                 alt={productImageAlt}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   target.src = "/placeholder.svg"
@@ -133,11 +133,11 @@ export function ProductsSection() {
                               </div>
                             </div>
                             {/* Image on bottom */}
-                            <div className="relative h-full w-full overflow-hidden bg-white">
+                            <div className="relative h-full w-full overflow-hidden flex items-center justify-center bg-white">
                               <img
                                 src={productImage}
                                 alt={productImageAlt}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   target.src = "/placeholder.svg"
