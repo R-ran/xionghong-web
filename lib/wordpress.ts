@@ -123,7 +123,7 @@ async function transformAboutSections(wpPosts: any[], wpApiUrl: string): Promise
         icon: (post.meta?.icon || post.acf?.icon || defaultIcons[slug] || 'Award') as AboutSection['icon'],
         image: imageUrl,
         imageAlt: post.title.rendered,
-        href: `/about/${sectionId}`,
+        href: `/about?section=${sectionId}`,
         order: moduleOrder.indexOf(slug) !== -1 ? moduleOrder.indexOf(slug) : 999,
       }
     })

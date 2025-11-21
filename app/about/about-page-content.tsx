@@ -302,11 +302,11 @@ function AboutPageContent({ initialSections }: { initialSections: AboutSection[]
         {selectedItem ? (
           <div className="container mx-auto px-4 mb-16">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div className="relative w-full h-96 md:h-[500px] overflow-hidden rounded-lg">
+              <div className="relative w-full flex items-center justify-center">
                 <img
                   src={selectedItem.image || selectedItem.fallbackImage || "/placeholder.svg"}
                   alt={selectedItem.imageAlt || selectedItem.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-auto max-h-[600px] object-contain rounded-lg"
                   data-fallback={selectedItem.fallbackImage || "/placeholder.svg"}
                   onError={(event) =>
                     handleImageError(event, selectedItem.fallbackImage || "/placeholder.svg")

@@ -9,7 +9,7 @@ import { Footer } from "@/components/footer"
 import { StickyNav } from "@/components/sticky-nav"
 import { TopHeader } from "@/components/top-header"
 import { Metadata } from "next"
-import { getProjects } from "@/lib/wordpress"
+import { getProjects, getAboutSections } from "@/lib/wordpress"
 
 export const metadata: Metadata = {
   title: "Home",
@@ -19,6 +19,8 @@ export const metadata: Metadata = {
 export default async function Home() {
   // 在服务器端获取成功案例数据
   let projects = []
+  let aboutSections = []
+  
   try {
     const allProjects = await getProjects()
     
@@ -74,6 +76,14 @@ export default async function Home() {
     // 如果获取失败，使用空数组，组件会显示"暂无数据"
   }
 
+  // 在服务器端获取 About Sections 数据
+  try {
+    aboutSections = await getAboutSections()
+  } catch (error) {
+    console.error('首页获取 About Sections 失败:', error)
+    // 如果获取失败，使用空数组，组件会使用 fallback 数据
+  }
+
   return (
     <main className="min-h-screen">
       <TopHeader />
@@ -81,7 +91,7 @@ export default async function Home() {
       <HeroCarousel />
       <ProductsSection />
       <TestimonialsSection projects={projects} />
-      <AboutSection />
+      <AboutSection initialSections={aboutSections} />
       <CustomerMessagesSection />
       <NewsBlogSection />
       <PartnersSection />

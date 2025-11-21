@@ -6,7 +6,6 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Building2, Factory, Award, History } from "lucide-react"
 
-import { getAboutSections } from "@/lib/wordpress"
 import type { AboutSection as AboutSectionType } from "@/lib/wordpress"
 
 // 图标映射
@@ -17,29 +16,95 @@ const iconMap = {
   History,
 } as const
 
-export function AboutSection() {
-  const [aboutSections, setAboutSections] = useState<AboutSectionType[]>([])
-  const [loading, setLoading] = useState(true)
+// Fallback 图片映射（与详情页保持一致）
+const FALLBACK_IMAGES: Record<string, string> = {
+  "why-choose-us": "/why.jpg",
+  "factory-overview": "/industrial-factory-production-floor.jpg",
+  factory: "/industrial-factory-production-floor.jpg",
+  history: "/history.jpg",
+  certificate: "/certificate.jpg",
+  overview: "/construction-site-with-installed-rock-bolts.jpg",
+}
+
+// 处理图片 URL，确保使用 WordPress 图片或正确的 fallback
+function processSectionImage(section: AboutSectionType): string {
+  const sanitizeImageUrl = (url?: string | null): string => {
+    if (!url) return ""
+    const normalized = url.trim()
+    if (!normalized) return ""
+    const lower = normalized.toLowerCase()
+    if (
+      lower === "/placeholder.svg" ||
+      lower.endsWith("/placeholder.svg") ||
+      lower === "placeholder.svg"
+    ) {
+      return ""
+    }
+    return normalized
+  }
+
+  const baseImage = sanitizeImageUrl(section.image)
+  const fallbackImage = FALLBACK_IMAGES[section.id] ?? "/placeholder.svg"
+
+  return baseImage || fallbackImage
+}
+
+interface AboutSectionProps {
+  initialSections?: AboutSectionType[]
+}
+
+export function AboutSection({ initialSections = [] }: AboutSectionProps) {
+  const [aboutSections, setAboutSections] = useState<AboutSectionType[]>(initialSections)
+  const [loading, setLoading] = useState(initialSections.length === 0)
 
   useEffect(() => {
+    // 如果已经有初始数据，先使用它们
+    if (initialSections.length > 0) {
+      setAboutSections(initialSections)
+      setLoading(false)
+    }
+
     async function fetchAboutSections() {
       try {
-        // 添加时间戳参数避免缓存
-        const sections = await getAboutSections()
+        // 通过 API 路由获取数据，避免 CORS 问题
+        const timestamp = Date.now()
+        const res = await fetch(`/api/about-sections?_=${timestamp}`, {
+          cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status} ${res.statusText}`)
+        }
+
+        const sections = await res.json()
         console.log('首页获取到的 About Sections:', sections)
         setAboutSections(sections)
       } catch (error) {
         console.error('Failed to fetch about sections:', error)
+        // 如果获取失败且有初始数据，保持使用初始数据
+        if (initialSections.length === 0) {
+          setLoading(false)
+        }
       } finally {
         setLoading(false)
       }
     }
 
-    fetchAboutSections()
+    // 如果没有初始数据，立即获取；如果有初始数据，延迟获取以更新
+    if (initialSections.length === 0) {
+      fetchAboutSections()
+    } else {
+      // 延迟获取，确保初始数据先显示
+      setTimeout(fetchAboutSections, 1000)
+    }
+
     // 每30秒重新获取一次，确保 WordPress 更新能及时显示
     const interval = setInterval(fetchAboutSections, 30000)
     return () => clearInterval(interval)
-  }, [])
+  }, [initialSections])
 
   // 添加调试日志来确认使用的数据来源
   useEffect(() => {
@@ -77,7 +142,7 @@ export function AboutSection() {
       icon: "Factory" as const,
       image: "/industrial-factory-production-floor.jpg",
       imageAlt: "Interior of SINOROCK's advanced anchor bolt manufacturing facility",
-      href: "/about/factory",
+      href: "/about?section=factory-overview",
       order: 1,
     },
     {
@@ -90,7 +155,7 @@ export function AboutSection() {
       icon: "History" as const,
       image: "/history.jpg",
       imageAlt: "Historical display of SINOROCK project milestones",
-      href: "/about/history",
+      href: "/about?section=history",
       order: 2,
     },
     {
@@ -103,7 +168,7 @@ export function AboutSection() {
       icon: "Award" as const,
       image: "/certificate.jpg",
       imageAlt: "Certificates highlighting SINOROCK quality and safety achievements",
-      href: "/about/certificate",
+      href: "/about?section=certificate",
       order: 3,
     },
   ]
@@ -130,7 +195,10 @@ export function AboutSection() {
 
   const displaySections = loading || !aboutSections || aboutSections.length === 0
     ? fallbackAboutSections
-    : getOrderedSections(aboutSections)
+    : getOrderedSections(aboutSections).map(section => ({
+        ...section,
+        image: processSectionImage(section)
+      }))
 
   const handleImageError = useCallback(
     (event: SyntheticEvent<HTMLImageElement>, fallback: string) => {
@@ -170,7 +238,10 @@ export function AboutSection() {
                         src={item.image || "/placeholder.svg"}
                         alt={item.imageAlt || item.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        onError={(event) => handleImageError(event, "/placeholder.svg")}
+                        onError={(event) => {
+                          const fallback = FALLBACK_IMAGES[item.id] || "/placeholder.svg"
+                          handleImageError(event, fallback)
+                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent" />
                       <div className="absolute bottom-4 left-4 right-4">
@@ -179,7 +250,7 @@ export function AboutSection() {
                       </div>
                     </div>
                     <div className="p-6">
-                      <p className="text-muted-foreground">{item.description}</p>
+                      <p className="text-muted-foreground line-clamp-5">{item.description}</p>
                     </div>
                   </CardContent>
                 </Card>

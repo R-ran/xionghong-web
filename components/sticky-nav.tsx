@@ -38,7 +38,7 @@ const categories = [
     href: "/about",
     dropdown: [
       { label: "Why choose us", href: "/about?section=why-choose-us" },
-      { label: "Factory Overview", href: "/about?section=factory" },
+      { label: "Factory Overview", href: "/about?section=factory-overview" },
       { label: "History", href: "/about?section=history" },
       { label: "Certificate", href: "/about?section=certificate" },
     ],

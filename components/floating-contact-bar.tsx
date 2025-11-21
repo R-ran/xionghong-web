@@ -77,7 +77,7 @@ export function FloatingContactBar() {
             }`}
             aria-label="WhatsApp"
           >
-            <Image src="/WhatsApp.png" alt="WhatsApp icon for SINOROCK support" width={24} height={24} className="w-6 h-6" />
+            <Image src="/WhatsApp.png" alt="WhatsApp icon for XINHONG support" width={24} height={24} className="w-6 h-6" />
           </button>
           {hoveredItem === "whatsapp" && (
             <div className="absolute right-full top-0 mr-2 bg-[#1e3a5f] text-white px-4 py-3 rounded-lg whitespace-nowrap shadow-xl z-[10000]">
